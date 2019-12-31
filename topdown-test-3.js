@@ -1,23 +1,94 @@
 var Vector2 = Phaser.Math.Vector2;
 
+function objMerge(a, b) {
+    var r = {};
+    const aKeys = Object.keys(a);
+    // Loop over keys in a
+    for (const key of aKeys) {
+        // If b also has it, then we want b
+        if (b.hasOwnProperty(key)) {
+            // unless it's another object, then merge those
+            if (typeof(b[key]) === 'object') {
+                r[key] = objMerge(a[key], b[key]);
+            } else {
+                r[key] = b[key];
+            }
+        } else {
+            if (typeof(a[key]) === 'object') {
+                r[key] = objMerge(a[key], {});
+            } else {
+                r[key] = a[key];
+            }
+        }
+    }
+    const bKeys = Object.keys(b);
+    // Loop over keys in b
+    for (const key of bKeys) {
+        // If we've haven't already processed this one.
+        if (!aKeys.includes(key)) {
+            if (typeof(b[key]) === 'object') {
+                r[key] = objMerge({}, b[key]);
+            } else {
+                r[key] = b[key];
+            }
+        }
+    }
+    return r;
+}
+
+
+const PLAYER_CONFIG_DEFAULTS = {
+    health: 100,
+    speed: 4,
+    primaryFireRate: 4,
+    primaryDamage: 5,
+}
+
+const SPEED_SCALE = 50;
+
 var Player = new Phaser.Class({
     Extends: Phaser.Physics.Arcade.Sprite,
 
-    initialize: function Player(scene, x, y, texture) {
+    initialize: function Player(scene, x, y, texture, config) {
         Phaser.Physics.Arcade.Sprite.call(this, scene, x, y, texture);
 
         this.pad = null;
-        this.setData('lastShotTime', 0);
-        this.setData('shootCooldown', 250);
-        this.setData('health', 100);
+
+        this.configure(config);
+
+        this.reset();
 
         this.lifeBar = this.scene.add.graphics();
         this.state = 'alive';
     },
 
+    reset: function () {
+        this.setData('lastShotTime', 0);        
+    },
+
+    configure: function (config) {
+        if (config) {
+            config = objMerge(PLAYER_CONFIG_DEFAULTS, config);
+        } else {
+            config = PLAYER_CONFIG_DEFAULTS;
+        }
+
+        this.setData('maxHealth', config.health);
+        this.setData('health', config.health);
+        this.setData('speed', config.speed);
+
+        this.setData('primaryCooldown', 1000 / config.primaryFireRate);
+        this.setData('primaryDamage', config.primaryDamage);
+
+    },
+
     setGamepad: function (pad) {
         console.log("Player " + this.name + " setGamepad: " + pad.index);
         this.pad = pad;
+    },
+
+    curSpeed: function () {
+        return this.getData('speed');
     },
 
     preUpdate: function (time, delta) {
@@ -30,19 +101,19 @@ var Player = new Phaser.Class({
                     //console.log(this.pad.leftStick, a*Phaser.Math.RAD_TO_DEG);
                     this.rotation = a;
                 }
-                var SPEED = 200;
-                this.setVelocity(this.pad.leftStick.x*SPEED, this.pad.leftStick.y*SPEED);
+                var speedMult = this.curSpeed() * SPEED_SCALE;
+                this.setVelocity(this.pad.leftStick.x*speedMult, this.pad.leftStick.y*speedMult);
 
                 if (this.pad.R2 > 0) {
                     var BULLET_SPEED = 300;
-                    if (time - this.getData('lastShotTime') > this.getData('shootCooldown')) {
+                    if (time - this.getData('lastShotTime') > this.getData('primaryCooldown')) {
                         this.setData('lastShotTime', time);
                         var facing = new Vector2(1, 0);
                         Phaser.Math.Rotate(facing, this.rotation);
                         this.emit('shoot', this,
                             this.x, this.y,
                             facing.x*BULLET_SPEED, facing.y*BULLET_SPEED,
-                            5);
+                            this.getData('primaryDamage'));
                     }
                 }
 
@@ -87,16 +158,17 @@ var Player = new Phaser.Class({
     },
 
     bulletHit: function (bullet) {
-        var health = this.getData('health');
-        var damage = bullet.getData('damage');
-        if (damage > health) {
-            this.die();
-        } else {
-            this.setData('health', health - damage)
-            this.camera.shake(250, 0.01);
-            this.damagedParticles.emitParticleAt(this.x, this.y);
+        if (this.state == 'alive') {
+            var health = this.getData('health');
+            var damage = bullet.getData('damage');
+            if (damage > health) {
+                this.die();
+            } else {
+                this.setData('health', health - damage)
+                this.camera.shake(250, 0.01);
+                this.damagedParticles.emitParticleAt(this.x, this.y);
+            }
         }
-
     },
 })
 
@@ -129,8 +201,8 @@ var TopdownTest2 = new Phaser.Class({
         }
     },
 
-    createPlayer: function (index, x, y) {
-        var player = new Player(this, x, y, 'ship')
+    createPlayer: function (index, x, y, config) {
+        var player = new Player(this, x, y, 'ship', config)
         player.name = "player-" + index;
         this.add.existing(player);
         this.physics.add.existing(player);
@@ -196,9 +268,19 @@ var TopdownTest2 = new Phaser.Class({
         borderGroup.add(this.add.rectangle(0, 0, 20, 1200, 0x202020).setOrigin(0))
         borderGroup.add(this.add.rectangle(1580, 0, 20, 1200, 0x202020).setOrigin(0))
 
+        var player1Config = {
+            speed: 10,
+            primaryFireRate: 10,
+            primaryDamage: 1,
+        }
 
-        this.player = this.createPlayer(0, 100, 300);
-        this.player2 = this.createPlayer(1, 500, 300);
+        var player2Config = {
+            speed: 4,
+            primaryFireRate: 10,
+        }
+
+        this.player = this.createPlayer(0, 100, 300, player1Config);
+        this.player2 = this.createPlayer(1, 500, 300, player2Config);
         this.players = [this.player, this.player2];
         for (var i = 0; i < 2; i++) {
             var player = this.players[i];
@@ -212,8 +294,8 @@ var TopdownTest2 = new Phaser.Class({
         this.camera2.setBounds(0, 0, 1600, 1200);
         this.cameras.main.setViewport(0, 0, 800, 300)
         this.camera2.setViewport(0, 300, 800, 300)
-        this.cameras.main.startFollow(this.player, true, 0.05, 0.05);
-        this.camera2.startFollow(this.player2, true, 0.05, 0.05);
+        this.cameras.main.startFollow(this.player, true, 0.2, 0.2);
+        this.camera2.startFollow(this.player2, true, 0.2, 0.2);
         this.player.camera = this.cameras.main;
         this.player2.camera = this.camera2;
 
@@ -246,7 +328,7 @@ var TopdownTest2 = new Phaser.Class({
 
     bulletHitPlayer: function (player, bullet) {
         if (bullet.getData("shotBy") != player.name) {
-            console.log("" + player.name + " HIT");
+            //console.log("" + player.name + " HIT");
             bullet.disableBody(true, true);
             player.bulletHit(bullet);
         }
@@ -281,6 +363,10 @@ var TopdownTest2 = new Phaser.Class({
         var pads = this.input.gamepad.gamepads;
         //console.log("Found " + pads.length + " game pads");
         //this.cameras.main.centerOn(this.player.x, this.player.y);
+        for (var player of this.players) {
+            player.lifeBar.x = player.x;
+            player.lifeBar.y = player.y;
+        }
     }
 
 });
