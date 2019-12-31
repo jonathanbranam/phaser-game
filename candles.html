@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Candles</title>
+    <script src="https://cdn.jsdelivr.net/npm/phaser@3.21.0/dist/phaser-arcade-physics.min.js"></script>
+</head>
+<body>
+
+    <script>
+
+var Breakout = new Phaser.Class({
+
+    Extends: Phaser.Scene,
+
+    initialize: function Breakout ()
+    {
+        Phaser.Scene.call(this, { key: 'breakout' });
+    },
+
+    preload: function ()
+    {
+	    this.load.setBaseURL('http://labs.phaser.io');
+        this.load.atlas('assets', 'assets/games/breakout/breakout.png', 'assets/games/breakout/breakout.json');
+        this.load.bitmapFont('atari', 'assets/fonts/bitmap/atari-smooth.png', 'assets/fonts/bitmap/atari-smooth.xml');
+    },
+
+    create: function ()
+    {
+        //  Enable world bounds, but disable the floor
+        this.physics.world.setBoundsCollision(true, true, true, false);
+
+        this.colors = [ 'blue1', 'red1', 'green1', 'yellow1', 'silver1', 'purple1' ]
+        this.score = 0;
+        this.scoreText = this.add.bitmapText(614, 30, 'atari', 'Moves', 20);
+        this.scoreText.setText("Score: "+ this.score);
+
+        for (var x = 70; x < 740; x += 70) {
+            for (var y = 130; y < 300; y += 40) {
+                color = Phaser.Math.RND.pick(this.colors)
+                var testBrick = this.add.image(x, y, "assets", color)
+                testBrick.setInteractive();
+                testBrick.name = "testBrick";
+                testBrick.visible = false;
+                this.time.delayedCall(Math.random()*8000+1000, this.showBrick, [testBrick], this);
+            }
+        }
+
+        //this.testBrick = this.add.image(500, 200, "assets", "green2")
+        //this.testBrick.setInteractive();
+        //this.testBrick.name = "testBrick"
+
+        this.input.on('gameobjectdown', this.onObjectClicked, this);
+
+    },
+
+    onObjectClicked: function (pointer, gameObject)
+    {
+        //console.log("Clicked on " + gameObject.name);
+        if (gameObject.name == "testBrick") {
+            this.score += 1;
+            this.scoreText.setText("Score: "+ this.score);
+            console.log("Score: " + this.score);
+            this.hideBrick(gameObject);
+        }
+    },
+
+    hideBrick: function (brick) {
+        brick.visible = false;
+        this.time.delayedCall(Math.random()*8000+1000, this.showBrick, [brick], this);
+    },
+
+    showBrick: function (brick) {
+        brick.visible = true;
+        this.time.delayedCall(Math.random()*5000+1000, this.hideBrick, [brick], this);
+    },
+
+    update: function ()
+    {
+        /*
+        for (var brick of this.testBricks) {
+            brick.visible = true;
+        }
+        */
+    }
+
+});
+
+var config = {
+    type: Phaser.WEBGL,
+    width: 800,
+    height: 600,
+    parent: 'phaser-example',
+    scene: [ Breakout ],
+    physics: {
+        default: 'arcade'
+    }
+};
+
+var game = new Phaser.Game(config);
+
+
+    </script>
+
+</body>
+</html>
