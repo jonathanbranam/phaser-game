@@ -40,11 +40,25 @@ function objMerge(a, b) {
 const PLAYER_CONFIG_DEFAULTS = {
     health: 100,
     speed: 4,
+
+    // number of bullets fired per second
     primaryFireRate: 4,
+    // damage per bullet
     primaryDamage: 5,
+    // speed of primary ranged attack
+    primarySpeed: 6,
+
+    // Dashes
+    // number of dashes per second
+    dashRate: 1/4,
+    // duration of dash in ms
+    dashDuration: 80,
+    // speed of dash
+    dashSpeed: 30,
 }
 
 const SPEED_SCALE = 50;
+const DASH_SPEED_SCALE = 50;
 
 var Player = new Phaser.Class({
     Extends: Phaser.Physics.Arcade.Sprite,
@@ -60,77 +74,8 @@ var Player = new Phaser.Class({
 
         this.lifeBar = this.scene.add.graphics();
         this.state = 'alive';
-    },
 
-    reset: function () {
-        this.setData('lastShotTime', 0);        
-    },
-
-    configure: function (config) {
-        if (config) {
-            config = objMerge(PLAYER_CONFIG_DEFAULTS, config);
-        } else {
-            config = PLAYER_CONFIG_DEFAULTS;
-        }
-
-        this.setData('maxHealth', config.health);
-        this.setData('health', config.health);
-        this.setData('speed', config.speed);
-
-        this.setData('primaryCooldown', 1000 / config.primaryFireRate);
-        this.setData('primaryDamage', config.primaryDamage);
-
-    },
-
-    setGamepad: function (pad) {
-        console.log("Player " + this.name + " setGamepad: " + pad.index);
-        this.pad = pad;
-    },
-
-    curSpeed: function () {
-        return this.getData('speed');
-    },
-
-    preUpdate: function (time, delta) {
-        //console.log("Player " + this.name + " pre-update: " + delta);
-        if (this.pad) {
-            if (this.state != 'dead') {
-                var STICK_MIN = 0.1;
-                if (Math.abs(this.pad.rightStick.x) > STICK_MIN || Math.abs(this.pad.rightStick.y) > STICK_MIN) {
-                    var a = Phaser.Math.Angle.Between(0, 0, this.pad.rightStick.x, this.pad.rightStick.y);
-                    //console.log(this.pad.leftStick, a*Phaser.Math.RAD_TO_DEG);
-                    this.rotation = a;
-                }
-                var speedMult = this.curSpeed() * SPEED_SCALE;
-                this.setVelocity(this.pad.leftStick.x*speedMult, this.pad.leftStick.y*speedMult);
-
-                if (this.pad.R2 > 0) {
-                    var BULLET_SPEED = 300;
-                    if (time - this.getData('lastShotTime') > this.getData('primaryCooldown')) {
-                        this.setData('lastShotTime', time);
-                        var facing = new Vector2(1, 0);
-                        Phaser.Math.Rotate(facing, this.rotation);
-                        this.emit('shoot', this,
-                            this.x, this.y,
-                            facing.x*BULLET_SPEED, facing.y*BULLET_SPEED,
-                            this.getData('primaryDamage'));
-                    }
-                }
-
-            }
-        }
-
-        var health = this.getData('health');
-        this.lifeBar.x = this.x;
-        this.lifeBar.y = this.y;
-        this.lifeBar.clear();
-
-        this.lifeBar.lineStyle(1, '0x000000', 1.0);
-        this.lifeBar.strokeRect(-10, -30, 20, 6);
-
-        this.lifeBar.fillStyle('0x00FF00', 1.0);
-        var lifeBarWidth = 20 * health / 100;
-        this.lifeBar.fillRect(-10, -30, lifeBarWidth, 6);
+        this.on('hitWall', this.hitWall, this);
 
         this.damagedParticles = this.scene.add.particles('explosion');
 
@@ -147,6 +92,115 @@ var Player = new Phaser.Class({
             },
             on: false,
         })
+
+
+    },
+
+    hitWall: function (wall) {
+        // Stop dashing when you hit a wall
+        this.isDashing = false;
+    },
+
+    reset: function () {
+        this.setData('lastShotTime', 0);
+        this.setData('lastDashTime', 0);
+    },
+
+    configure: function (config) {
+        if (config) {
+            config = objMerge(PLAYER_CONFIG_DEFAULTS, config);
+        } else {
+            config = PLAYER_CONFIG_DEFAULTS;
+        }
+
+        const configKeys = Object.keys(config);
+        for (const key of configKeys) {
+            this.setData(key, config[key]);
+        }
+
+        this.setData('maxHealth', config.health);
+        this.setData('primaryCooldown', 1000 / config.primaryFireRate);
+        this.setData('dashCooldown', 1000 / config.dashRate);
+
+    },
+
+    setGamepad: function (pad) {
+        console.log("Player " + this.name + " setGamepad: " + pad.index);
+        this.pad = pad;
+    },
+
+    curSpeed: function () {
+        return this.getData('speed');
+    },
+
+    curDashSpeed: function () {
+        return this.getData('dashSpeed');
+    },
+
+    handleGamepad: function (time, delta) {
+        var STICK_MIN = 0.05;
+        if (Math.abs(this.pad.rightStick.x) > STICK_MIN || Math.abs(this.pad.rightStick.y) > STICK_MIN) {
+            var a = Phaser.Math.Angle.Between(0, 0, this.pad.rightStick.x, this.pad.rightStick.y);
+            //console.log(this.pad.leftStick, a*Phaser.Math.RAD_TO_DEG);
+            this.rotation = a;
+        }
+        var speedMult = this.curSpeed() * SPEED_SCALE;
+        this.setVelocity(this.pad.leftStick.x*speedMult, this.pad.leftStick.y*speedMult);
+
+        if (this.pad.R2 > 0) {
+            if (time - this.getData('lastShotTime') > this.getData('primaryCooldown')) {
+                this.setData('lastShotTime', time);
+                var facing = new Vector2(1, 0);
+                Phaser.Math.Rotate(facing, this.rotation);
+                var bulletSpeed = this.getData('primarySpeed') * SPEED_SCALE;
+                this.emit('shoot', this,
+                    this.x, this.y,
+                    facing.x*bulletSpeed, facing.y*bulletSpeed,
+                    this.getData('primaryDamage'));
+            }
+        }
+
+        if (this.isDashing) {
+            if (time < this.dashUntil) {
+                this.setVelocity(this.dashDirection.x*this.dashSpeedMult, this.dashDirection.y*this.dashSpeedMult);
+            } else {
+                this.isDashing = false;
+            }
+        }
+
+        if (this.pad.buttons[10].value && (Math.abs(this.pad.leftStick.x) > STICK_MIN || Math.abs(this.pad.leftStick.y) > STICK_MIN)) {
+            if (time - this.getData('lastDashTime') > this.getData('dashCooldown')) {
+                this.setData('lastDashTime', time);
+                this.isDashing = true;
+                this.dashSpeedMult = this.curDashSpeed() * DASH_SPEED_SCALE;
+                this.dashUntil = time + this.getData('dashDuration');
+                this.dashDirection = new Vector2(this.pad.leftStick.x, this.pad.leftStick.y);
+                this.dashDirection.normalize();
+                this.setVelocity(this.dashDirection.x*this.dashSpeedMult, this.dashDirection.y*this.dashSpeedMult);
+            }
+        }
+
+    },
+
+    preUpdate: function (time, delta) {
+        //console.log("Player " + this.name + " pre-update: " + delta);
+        if (this.state != 'dead') {
+            if (this.pad) {
+                this.handleGamepad(time, delta);
+            }
+        }
+
+        var health = this.getData('health');
+        this.lifeBar.x = this.x;
+        this.lifeBar.y = this.y;
+        this.lifeBar.clear();
+
+        this.lifeBar.lineStyle(1, '0x000000', 1.0);
+        this.lifeBar.strokeRect(-10, -30, 20, 6);
+
+        this.lifeBar.fillStyle('0x00FF00', 1.0);
+        var lifeBarWidth = 20 * health / this.getData('maxHealth');
+        this.lifeBar.fillRect(-10, -30, lifeBarWidth, 6);
 
     },
 
@@ -179,10 +233,13 @@ var TopdownTest2 = new Phaser.Class({
     initialize: function TopdownTest2 ()
     {
         Phaser.Scene.call(this, { key: 'topdown', active: true });
+        this.gamepadsConnected = {};
+        this.nextCheckGamepadsTime = 1000;
     },
 
     preload: function ()
     {
+        this.input.gamepad.on('connected', this.onPadConnected, this);
         //this.load.atlas('assets', 'assets/games/breakout/breakout.png', 'assets/games/breakout/breakout.json');
         //this.load.bitmapFont('atari', 'assets/fonts/bitmap/atari-smooth.png', 'assets/fonts/bitmap/atari-smooth.xml');
         this.load.atlas('platformer', 'assets/sets/platformer.png', 'assets/sets/platformer.json');
@@ -194,6 +251,7 @@ var TopdownTest2 = new Phaser.Class({
 
     onPadConnected: function (pad) {
         console.log("Gamepad connected: " + pad.index);
+        this.gamepadsConnected[pad.index] = true;
         if (pad.index === 0) {
             this.player.setGamepad(pad);
         } else if (pad.index === 1) {
@@ -269,14 +327,15 @@ var TopdownTest2 = new Phaser.Class({
         borderGroup.add(this.add.rectangle(1580, 0, 20, 1200, 0x202020).setOrigin(0))
 
         var player1Config = {
-            speed: 10,
+            speed: 6,
             primaryFireRate: 10,
-            primaryDamage: 1,
+            primaryDamage: 2,
+            primarySpeed: 10,
         }
 
         var player2Config = {
             speed: 4,
-            primaryFireRate: 10,
+            primaryFireRate: 4,
         }
 
         this.player = this.createPlayer(0, 100, 300, player1Config);
@@ -303,17 +362,15 @@ var TopdownTest2 = new Phaser.Class({
         //this.add.existing(this.player);
         //this.physics.add.existing(this.player);
 
-        this.input.gamepad.on('connected', this.onPadConnected, this);
-
         var pads = this.input.gamepad.gamepads;
         console.log("Found " + pads.length + " game pads");
 
 
-        this.physics.add.collider(this.players, walls);
-        this.physics.add.collider(this.players, borderGroup);
+        this.physics.add.collider(this.players, walls, this.playerHitWall, null, this);
+        this.physics.add.collider(this.players, borderGroup, this.playerHitWall, null, this);
 
         this.bullets = this.physics.add.group({
-            maxSize: 25,
+            maxSize: 100,
             collideWorldBounds: true,
         });
 
@@ -324,6 +381,10 @@ var TopdownTest2 = new Phaser.Class({
         this.physics.add.overlap(this.bullets, this.players, this.bulletHitPlayer, null, this);
 
 
+    },
+
+    playerHitWall: function (player, wall) {
+        player.emit('hitWall', wall);
     },
 
     bulletHitPlayer: function (player, bullet) {
@@ -360,12 +421,17 @@ var TopdownTest2 = new Phaser.Class({
 
     update: function (time, delta)
     {
-        var pads = this.input.gamepad.gamepads;
-        //console.log("Found " + pads.length + " game pads");
-        //this.cameras.main.centerOn(this.player.x, this.player.y);
-        for (var player of this.players) {
-            player.lifeBar.x = player.x;
-            player.lifeBar.y = player.y;
+        // periodically check for new gamepads
+        if (time > this.nextCheckGamepadsTime) {
+            var GAMEPAD_CHECK_TIME = 1000;
+            this.nextCheckGamepadsTime = time + GAMEPAD_CHECK_TIME;
+            var pads = this.input.gamepad.gamepads;
+            for (var pad of pads) {
+                if (!this.gamepadsConnected[pad.index]) {
+                    console.log("Force on pad connected for " + pad.index);
+                    this.onPadConnected(pad);
+                }
+            }
         }
     }
 
@@ -382,11 +448,6 @@ var TopdownGUI = new Phaser.Class({
 
     preload: function ()
     {
-        //this.load.atlas('assets', 'assets/games/breakout/breakout.png', 'assets/games/breakout/breakout.json');
-        //this.load.bitmapFont('atari', 'assets/fonts/bitmap/atari-smooth.png', 'assets/fonts/bitmap/atari-smooth.xml');
-        //this.load.image('ship', 'assets/games/asteroids/ship.png')
-        //this.load.image('bullet', 'assets/games/asteroids/bullets.png')
-        //this.load.image('ground', 'assets/sets/tiles/5.png');
     },
 
     create: function ()
