@@ -48,9 +48,13 @@ const PLAYER_CONFIG_DEFAULTS = {
     // speed of primary ranged attack
     primarySpeed: 6,
 
+    abilityFireRate: 1/4,
+    abilityDamage: 25,
+    abilitySpeed: 6,
+
     // Dashes
     // number of dashes per second
-    dashRate: 1,
+    dashRate: 1/4,
     // duration of dash in ms
     dashDuration: 80,
     // speed of dash
@@ -94,6 +98,35 @@ var Player = new Phaser.Class({
         })
 
         this.coolDowns = {};
+        this.bullets = {};
+    },
+
+    setupPlayer: function () {
+        this.setupBulletGroup('bullet');
+        this.setupBulletGroup('rpg');
+    },
+
+    setupBulletGroup: function (key) {
+        var bullets = this.scene.physics.add.group({
+            maxSize: 100,
+            collideWorldBounds: true,
+        });
+        this.scene.addBulletGroup(bullets);
+
+        this.bullets[key] = bullets;
+    },
+
+    shootBullet: function (key, x, y, vel_x, vel_y, damage) {
+        var bullet = this.bullets[key].get(x, y, key)
+        if (bullet) {
+            bullet.type = 'bullet';
+            bullet.setData('shotBy', this.name);
+            bullet.setData('damage', damage);
+            bullet.body.onWorldBounds = true;
+            bullet.enableBody(true, x, y, true, true);
+            bullet.setVelocity(vel_x, vel_y);
+            bullet.rotation = this.rotation;
+        }
     },
 
     checkActionRate: function (time, key) {
@@ -161,10 +194,20 @@ var Player = new Phaser.Class({
                 var facing = new Vector2(1, 0);
                 Phaser.Math.Rotate(facing, this.rotation);
                 var bulletSpeed = this.getData('primarySpeed') * SPEED_SCALE;
-                this.emit('shoot', this,
-                    this.x, this.y,
+                this.shootBullet('bullet', this.x, this.y,
                     facing.x*bulletSpeed, facing.y*bulletSpeed,
                     this.getData('primaryDamage'));
+            }
+        }
+
+        if (this.pad.R1 > 0) {
+            if (this.checkActionRate(time, 'abilityFireRate')) {
+                var facing = new Vector2(1, 0);
+                Phaser.Math.Rotate(facing, this.rotation);
+                var bulletSpeed = this.getData('abilitySpeed') * SPEED_SCALE;
+                this.shootBullet('rpg', this.x, this.y,
+                    facing.x*bulletSpeed, facing.y*bulletSpeed,
+                    this.getData('abilityDamage'));
             }
         }
 
@@ -251,7 +294,9 @@ var TopdownTest2 = new Phaser.Class({
         //this.load.bitmapFont('atari', 'assets/fonts/bitmap/atari-smooth.png', 'assets/fonts/bitmap/atari-smooth.xml');
         this.load.atlas('platformer', 'assets/sets/platformer.png', 'assets/sets/platformer.json');
         this.load.image('ship', 'assets/games/asteroids/ship.png')
-        this.load.image('bullet', 'assets/games/asteroids/bullets.png')
+        //this.load.image('bullet', 'assets/games/asteroids/bullets.png')
+        this.load.image('bullet', 'assets/sprites/bullets/bullet5.png')
+        this.load.image('rpg', 'assets/sprites/bullets/bullet10.png')
         this.load.image('ground', 'assets/sets/tiles/5.png');
         this.load.atlas('explosion', 'assets/particles/explosion.png', 'assets/particles/explosion.json');
     },
@@ -333,6 +378,9 @@ var TopdownTest2 = new Phaser.Class({
         borderGroup.add(this.add.rectangle(0, 0, 20, 1200, 0x202020).setOrigin(0))
         borderGroup.add(this.add.rectangle(1580, 0, 20, 1200, 0x202020).setOrigin(0))
 
+        this.walls = walls;
+        this.borderGroup = borderGroup;
+
         var player1Config = {
             speed: 6,
             primaryFireRate: 10,
@@ -351,6 +399,7 @@ var TopdownTest2 = new Phaser.Class({
         for (var i = 0; i < 2; i++) {
             var player = this.players[i];
             player.on('shoot', this.onShoot, this);
+            player.setupPlayer();
             //player.on('died', this.onDied, this);
         }
 
@@ -378,6 +427,9 @@ var TopdownTest2 = new Phaser.Class({
 
         this.physics.add.collider(this.players, this.players, this.playerHitPlayer, null, this);
 
+        this.physics.world.on('worldbounds', this.onWorldBounds, this);
+
+        /*
         this.bullets = this.physics.add.group({
             maxSize: 100,
             collideWorldBounds: true,
@@ -385,12 +437,20 @@ var TopdownTest2 = new Phaser.Class({
 
         this.physics.add.collider(this.bullets, walls, this.bulletHitWall, null, this);
         this.physics.add.collider(this.bullets, borderGroup, this.bulletHitWall, null, this);
-        this.physics.world.on('worldbounds', this.onWorldBounds, this);
 
         this.physics.add.overlap(this.bullets, this.players, this.bulletHitPlayer, null, this);
-
+        */
 
     },
+
+    addBulletGroup: function (bullets) {
+        this.physics.add.collider(bullets, this.walls, this.bulletHitWall, null, this);
+        this.physics.add.collider(bullets, this.borderGroup, this.bulletHitWall, null, this);
+
+        this.physics.add.overlap(bullets, this.players, this.bulletHitPlayer, null, this);
+
+    },
+
 
     playerHitPlayer: function (playerA, playerB) {
         //player.emit('hitWall', wall);
@@ -400,7 +460,15 @@ var TopdownTest2 = new Phaser.Class({
         player.emit('hitWall', wall);
     },
 
-    bulletHitPlayer: function (player, bullet) {
+    bulletHitPlayer: function (objA, objB) {
+        var bullet, player;
+        if (objA.type === 'bullet') {
+            bullet = objA;
+            player = objB;
+        } else {
+            bullet = objB;
+            player = objA;
+        }
         if (bullet.getData("shotBy") != player.name) {
             //console.log("" + player.name + " HIT");
             bullet.disableBody(true, true);
@@ -423,9 +491,11 @@ var TopdownTest2 = new Phaser.Class({
 
     onWorldBounds: function (body) {
         var gameObject = body.gameObject;
+        // TODO: this is wrong now
+        /*
         if (this.bullets.contains(gameObject)) {
             this.bulletHitWall(gameObject, null);
-        }
+        }*/
     },
 
     bulletHitWall: function (bullet, wall) {
