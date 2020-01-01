@@ -50,11 +50,11 @@ const PLAYER_CONFIG_DEFAULTS = {
 
     // Dashes
     // number of dashes per second
-    dashRate: 1/4,
+    dashRate: 1,
     // duration of dash in ms
     dashDuration: 80,
     // speed of dash
-    dashSpeed: 30,
+    dashSpeed: 20,
 }
 
 const SPEED_SCALE = 50;
@@ -93,7 +93,21 @@ var Player = new Phaser.Class({
             on: false,
         })
 
+        this.coolDowns = {};
+    },
 
+    checkActionRate: function (time, key) {
+        if (this.coolDowns.hasOwnProperty(key)) {
+            if (time > this.coolDowns[key]) {
+                this.coolDowns[key] = time + 1000 / this.getData(key);
+                return true;
+            } else {
+                return false;
+            }
+        } else {
+            this.coolDowns[key] = time + 1000 / this.getData(key);
+            return true;
+        }
     },
 
     hitWall: function (wall) {
@@ -102,8 +116,6 @@ var Player = new Phaser.Class({
     },
 
     reset: function () {
-        this.setData('lastShotTime', 0);
-        this.setData('lastDashTime', 0);
     },
 
     configure: function (config) {
@@ -119,9 +131,6 @@ var Player = new Phaser.Class({
         }
 
         this.setData('maxHealth', config.health);
-        this.setData('primaryCooldown', 1000 / config.primaryFireRate);
-        this.setData('dashCooldown', 1000 / config.dashRate);
-
     },
 
     setGamepad: function (pad) {
@@ -148,8 +157,7 @@ var Player = new Phaser.Class({
         this.setVelocity(this.pad.leftStick.x*speedMult, this.pad.leftStick.y*speedMult);
 
         if (this.pad.R2 > 0) {
-            if (time - this.getData('lastShotTime') > this.getData('primaryCooldown')) {
-                this.setData('lastShotTime', time);
+            if (this.checkActionRate(time, 'primaryFireRate')) {
                 var facing = new Vector2(1, 0);
                 Phaser.Math.Rotate(facing, this.rotation);
                 var bulletSpeed = this.getData('primarySpeed') * SPEED_SCALE;
@@ -169,8 +177,7 @@ var Player = new Phaser.Class({
         }
 
         if (this.pad.buttons[10].value && (Math.abs(this.pad.leftStick.x) > STICK_MIN || Math.abs(this.pad.leftStick.y) > STICK_MIN)) {
-            if (time - this.getData('lastDashTime') > this.getData('dashCooldown')) {
-                this.setData('lastDashTime', time);
+            if (this.checkActionRate(time, 'dashRate')) {
                 this.isDashing = true;
                 this.dashSpeedMult = this.curDashSpeed() * DASH_SPEED_SCALE;
                 this.dashUntil = time + this.getData('dashDuration');
@@ -369,6 +376,8 @@ var TopdownTest2 = new Phaser.Class({
         this.physics.add.collider(this.players, walls, this.playerHitWall, null, this);
         this.physics.add.collider(this.players, borderGroup, this.playerHitWall, null, this);
 
+        this.physics.add.collider(this.players, this.players, this.playerHitPlayer, null, this);
+
         this.bullets = this.physics.add.group({
             maxSize: 100,
             collideWorldBounds: true,
@@ -381,6 +390,10 @@ var TopdownTest2 = new Phaser.Class({
         this.physics.add.overlap(this.bullets, this.players, this.bulletHitPlayer, null, this);
 
 
+    },
+
+    playerHitPlayer: function (playerA, playerB) {
+        //player.emit('hitWall', wall);
     },
 
     playerHitWall: function (player, wall) {
