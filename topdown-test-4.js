@@ -23,15 +23,17 @@ const PLAYER_CONFIG_DEFAULTS = {
     speed: 4,
 
     // number of bullets fired per second
-    primaryFireRate: 2,
+    primaryFireRate: 0.5,
     // damage per bullet
     primaryDamage: 5,
     // speed of primary ranged attack
     primarySpeed: 6,
+    primaryDistance: 250,
 
     abilityFireRate: 1/4,
     abilityDamage: 25,
     abilitySpeed: 6,
+    abilityDistance: 250,
 
     // Dashes
     // number of dashes per second
@@ -79,7 +81,8 @@ class Player extends Phaser.Physics.Arcade.Sprite {
         })
 
         this.coolDowns = {};
-        this.bullets = {};
+        this.bulletGroups = {};
+        this.bullets = [];
     }
 
     setupPlayer() {
@@ -88,25 +91,30 @@ class Player extends Phaser.Physics.Arcade.Sprite {
     }
 
     setupBulletGroup(key) {
-        const bullets = this.scene.physics.add.group({
+        const bulletGroup = this.scene.physics.add.group({
             maxSize: 100,
             collideWorldBounds: true,
         });
-        this.scene.addBulletGroup(bullets);
+        this.scene.addBulletGroup(bulletGroup);
 
-        this.bullets[key] = bullets;
+        this.bulletGroups[key] = bulletGroup;
     }
 
-    shootBullet(key, x, y, vel_x, vel_y, damage) {
-        const bullet = this.bullets[key].get(x, y, key)
+    shootBullet(key, x, y, vel_x, vel_y, damage, distance) {
+        const bullet = this.bulletGroups[key].get(x, y, key)
         if (bullet) {
             bullet.type = 'bullet';
+            bullet.scale = 3;
+            bullet.setData('startX', x);
+            bullet.setData('startY', y);
             bullet.setData('shotBy', this.name);
             bullet.setData('damage', damage);
+            bullet.setData('distance', distance);
             bullet.body.onWorldBounds = true;
             bullet.enableBody(true, x, y, true, true);
             bullet.setVelocity(vel_x, vel_y);
             bullet.rotation = this.rotation;
+            this.bullets.push(bullet);
         }
     }
 
@@ -208,7 +216,9 @@ class Player extends Phaser.Physics.Arcade.Sprite {
                 const bulletSpeed = this.getData('primarySpeed') * SPEED_SCALE;
                 this.shootBullet('bullet', this.x, this.y,
                     facing.x*bulletSpeed, facing.y*bulletSpeed,
-                    this.getData('primaryDamage'));
+                    this.getData('primaryDamage'),
+                    this.getData('primaryDistance'),
+                );
             }
         }
 
@@ -219,7 +229,9 @@ class Player extends Phaser.Physics.Arcade.Sprite {
                 const bulletSpeed = this.getData('abilitySpeed') * SPEED_SCALE;
                 this.shootBullet('rpg', this.x, this.y,
                     facing.x*bulletSpeed, facing.y*bulletSpeed,
-                    this.getData('abilityDamage'));
+                    this.getData('abilityDamage'),
+                    this.getData('abilityDistance'),
+                );
             }
         }
 
@@ -303,6 +315,19 @@ class Player extends Phaser.Physics.Arcade.Sprite {
                 this.handleGamepad(time, delta);
             } else if (this.keys) {
                 this.handleKeys(time, delta);
+            }
+        }
+
+        for (let bullet of this.bullets) {
+            const d = Phaser.Math.Distance.Between(
+                bullet.getData('startX'),
+                bullet.getData('startY'),
+                bullet.x,
+                bullet.y
+            );
+            console.log(`Bullet distance: ${d}`);
+            if (d > bullet.getData('distance')) {
+                bullet.disableBody(true, true);
             }
         }
 
@@ -444,15 +469,14 @@ class TopdownTest2 extends Phaser.Scene {
         this.borderGroup = borderGroup;
 
         const player1Config = {
-            speed: 6,
-            primaryFireRate: 4,
-            primaryDamage: 2,
-            primarySpeed: 10,
+            speed: 4,
+            primaryFireRate: 1,
+            primaryDamage: 3,
+            primarySpeed: 8,
         }
 
         const player2Config = {
             speed: 4,
-            primaryFireRate: 1,
         }
 
         this.player = this.createPlayer(0, 100, 300, player1Config);
