@@ -1,5 +1,23 @@
 const Vector2 = Phaser.Math.Vector2;
 
+const GAME_WIDTH = 1080;
+const GAME_HEIGHT = 600;
+const BOUNDS_WIDTH = 1600;
+const BOUNDS_HEIGHT = 1200;
+const SCREEN_SPLIT = 'vertical';
+//const SCREEN_SPLIT = 'horizontal';
+//const SCREEN_SPLIT = 'orignal';
+
+let CAMERA_WIDTH = null;
+let CAMERA_HEIGHT = null;
+if (SCREEN_SPLIT === 'vertical') {
+    CAMERA_WIDTH = Math.round(GAME_WIDTH / 2);
+    CAMERA_HEIGHT = GAME_HEIGHT;
+} else if (SCREEN_SPLIT === 'horizontal') {
+    CAMERA_WIDTH = GAME_WIDTH;
+    CAMERA_HEIGHT = Math.round(GAME_HEIGHT / 2);
+}
+
 const PLAYER_CONFIG_DEFAULTS = {
     health: 100,
     speed: 4,
@@ -366,13 +384,13 @@ class TopdownTest2 extends Phaser.Scene {
     }
 
     create() {
-        this.physics.world.setBounds(0, 0, 1600, 1200);
+        this.physics.world.setBounds(0, 0, BOUNDS_WIDTH, BOUNDS_HEIGHT);
 
         //  Enable world bounds
         this.physics.world.setBoundsCollision(true);
 
         // Create scene
-        this.add.tileSprite(0, 0, 1600, 1200, 'platformer', '5').setOrigin(0);
+        this.add.tileSprite(0, 0, BOUNDS_WIDTH, BOUNDS_HEIGHT, 'platformer', '5').setOrigin(0);
 
         const bushes = [
             {
@@ -416,10 +434,11 @@ class TopdownTest2 extends Phaser.Scene {
 
         // Create World Border
         const borderGroup = this.physics.add.staticGroup();
-        borderGroup.add(this.add.rectangle(0, 0, 1600, 20, 0x202020).setOrigin(0))
-        borderGroup.add(this.add.rectangle(0, 1180, 1600, 20, 0x202020).setOrigin(0))
-        borderGroup.add(this.add.rectangle(0, 0, 20, 1200, 0x202020).setOrigin(0))
-        borderGroup.add(this.add.rectangle(1580, 0, 20, 1200, 0x202020).setOrigin(0))
+        const BORDER_SIZE = 20;
+        borderGroup.add(this.add.rectangle(0, 0, BOUNDS_WIDTH, BORDER_SIZE, 0x202020).setOrigin(0))
+        borderGroup.add(this.add.rectangle(0, BOUNDS_HEIGHT-BORDER_SIZE, BOUNDS_WIDTH, BORDER_SIZE, 0x202020).setOrigin(0))
+        borderGroup.add(this.add.rectangle(0, 0, BORDER_SIZE, BOUNDS_HEIGHT, 0x202020).setOrigin(0))
+        borderGroup.add(this.add.rectangle(BOUNDS_WIDTH-BORDER_SIZE, 0, BORDER_SIZE, BOUNDS_HEIGHT, 0x202020).setOrigin(0))
 
         this.walls = walls;
         this.borderGroup = borderGroup;
@@ -464,11 +483,24 @@ class TopdownTest2 extends Phaser.Scene {
         }
 
         // Setup cameras
-        this.camera2 = this.cameras.add(0, 0, 800, 600);
-        this.cameras.main.setBounds(0, 0, 1600, 1200);
-        this.camera2.setBounds(0, 0, 1600, 1200);
-        this.cameras.main.setViewport(0, 0, 800, 300)
-        this.camera2.setViewport(0, 300, 800, 300)
+        if (SCREEN_SPLIT === 'vertical') {
+            this.camera2 = this.cameras.add(0, 0, CAMERA_WIDTH, CAMERA_HEIGHT);
+            this.cameras.main.setViewport(0, 0, CAMERA_WIDTH, CAMERA_HEIGHT)
+            this.camera2.setViewport(CAMERA_WIDTH, 0, CAMERA_WIDTH, CAMERA_HEIGHT)
+        } else if (SCREEN_SPLIT === 'horizontal') {
+            //this.camera2 = this.cameras.add(0, 0, GAME_WIDTH, GAME_HEIGHT);
+            this.camera2 = this.cameras.add(0, 0, CAMERA_WIDTH, CAMERA_HEIGHT);
+            this.cameras.main.setViewport(0, 0, CAMERA_WIDTH, CAMERA_HEIGHT)
+            this.camera2.setViewport(0, CAMERA_HEIGHT, CAMERA_WIDTH, CAMERA_HEIGHT)
+        } else {
+            this.camera2 = this.cameras.add(0, 0, 800, 600);
+            this.cameras.main.setViewport(0, 0, 800, 300)
+            this.camera2.setViewport(0, 300, 800, 300)
+        }
+
+        this.cameras.main.setBounds(0, 0, BOUNDS_WIDTH, BOUNDS_HEIGHT);
+        this.camera2.setBounds(0, 0, BOUNDS_WIDTH, BOUNDS_HEIGHT);
+
         this.cameras.main.startFollow(this.player, true, 0.2, 0.2);
         this.camera2.startFollow(this.player2, true, 0.2, 0.2);
         this.player.camera = this.cameras.main;
@@ -600,8 +632,16 @@ class TopdownGUI extends Phaser.Scene {
         });
 
         borders.clear();
-        const centerLine = new Phaser.Geom.Rectangle(0, 295, 800, 10);
-        borders.fillRectShape(centerLine);
+        const BORDER_SIZE = 10;
+        if (SCREEN_SPLIT == 'horizontal') {
+            const centerLine = new Phaser.Geom.Rectangle(0,
+                CAMERA_HEIGHT-(BORDER_SIZE/2), CAMERA_WIDTH, BORDER_SIZE);
+            borders.fillRectShape(centerLine);
+        } else if (SCREEN_SPLIT == 'vertical') {
+            const centerLine = new Phaser.Geom.Rectangle(
+                CAMERA_WIDTH-BORDER_SIZE, 0, BORDER_SIZE, CAMERA_HEIGHT);
+            borders.fillRectShape(centerLine);
+        }
 
     }
 
@@ -609,8 +649,15 @@ class TopdownGUI extends Phaser.Scene {
 
 const config = {
     type: Phaser.AUTO,
-    width: 800,
-    height: 600,
+    //width: 800,
+    //height: 600,
+    scale: {
+        parent: 'body',
+        mode: Phaser.Scale.FIT,
+        width: GAME_WIDTH,
+        height: GAME_HEIGHT
+        //autoRound: true,
+    },
     input: {
         gamepad: true
     },
