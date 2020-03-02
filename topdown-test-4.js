@@ -34,6 +34,7 @@ const PLAYER_CONFIG_DEFAULTS = {
     primarySpeed: 6,
     primaryDistance: 250,
 
+    abilityMaxCharge: 100,
     abilityFireRate: 1/4,
     abilityDamage: 50,
     abilitySpeed: 6,
@@ -267,17 +268,6 @@ class Player extends Phaser.Physics.Arcade.Sprite {
             }
         }
 
-        if (this.pad && this.pad.buttons[10].value && (Math.abs(this.pad.leftStick.x) > STICK_MIN || Math.abs(this.pad.leftStick.y) > STICK_MIN)) {
-            if (this.checkActionRate(time, 'dashRate')) {
-                this.isDashing = true;
-                this.dashSpeedMult = this.curDashSpeed() * DASH_SPEED_SCALE;
-                this.dashUntil = time + this.getData('dashDuration');
-                this.dashDirection = new Vector2(this.pad.leftStick.x, this.pad.leftStick.y);
-                this.dashDirection.normalize();
-                this.setVelocity(this.dashDirection.x*this.dashSpeedMult, this.dashDirection.y*this.dashSpeedMult);
-            }
-        }
-
     }
 
     handleGamepad(time, delta) {
@@ -323,15 +313,14 @@ class Player extends Phaser.Physics.Arcade.Sprite {
         const ammo = this.getData('primaryAmmo');
         const maxAmmo = this.getData('primaryMaxAmmo');
         if (ammo < maxAmmo) {
-            const ammoRegen = this.getData('primaryRegenRate') * delta;
+            const ammoRegen = this.getData('primaryRegenRate') * (delta / 1000);
             this.setData('primaryAmmo', Math.min(maxAmmo, ammo+ammoRegen));
         }
     }
 
     preUpdate(time, delta) {
-        console.log(delta);
         if (this.state != 'dead') {
-            this.updateAmmo(delta / 1000);
+            this.updateAmmo(delta);
 
             if (this.pad) {
                 this.handleGamepad(time, delta);
@@ -367,7 +356,7 @@ class Player extends Phaser.Physics.Arcade.Sprite {
         bar.clear();
 
         const x_offset = -(width / 2);
-        bar.lineStyle(1, '0x000000', 1.5);
+        bar.lineStyle(1, '0x000000', 2);
         bar.strokeRect(x_offset, y_offset, width, height);
 
         bar.fillStyle(color, 1.0);
@@ -399,11 +388,15 @@ class Player extends Phaser.Physics.Arcade.Sprite {
         this.state = 'dead';
     }
 
+    hitOther(player, bullet) {
+
+    }
+
     bulletHit(bullet) {
         if (this.state == 'alive') {
             const health = this.getData('health');
             const damage = bullet.getData('damage');
-            if (damage > health) {
+            if (health - damage < 1) {
                 this.die();
             } else {
                 this.setData('health', health - damage)
@@ -527,7 +520,7 @@ class TopdownTest2 extends Phaser.Scene {
             //primaryDamage: 6,
         }
 
-        this.player = this.createPlayer(0, 100, 300, player1Config);
+        this.player = this.createPlayer(0, BOUNDS_WIDTH/2, 100, player1Config);
 
         this.player.setKeys(this.input.keyboard.addKeys({
             up: Phaser.Input.Keyboard.KeyCodes.W,
@@ -537,7 +530,7 @@ class TopdownTest2 extends Phaser.Scene {
             primaryFire: Phaser.Input.Keyboard.KeyCodes.SPACE,
             abilityFire: Phaser.Input.Keyboard.KeyCodes.V
         }));
-        this.player2 = this.createPlayer(1, 500, 300, player2Config);
+        this.player2 = this.createPlayer(1, BOUNDS_WIDTH/2, BOUNDS_HEIGHT-100, player2Config);
         this.player2.setKeys(this.input.keyboard.addKeys({
             up: Phaser.Input.Keyboard.KeyCodes.UP,
             down: Phaser.Input.Keyboard.KeyCodes.DOWN,
@@ -547,8 +540,8 @@ class TopdownTest2 extends Phaser.Scene {
             abilityFire: Phaser.Input.Keyboard.KeyCodes.PERIOD
         }));
         this.players = [this.player, this.player2];
-        for (let i = 0; i < 2; i++) {
-            const player = this.players[i];
+        for (let player of this.players) {
+            //const player = this.players[i];
             // player.on('shoot', this.onShoot, this);
             player.setupPlayer();
             player.spawn();
@@ -616,6 +609,14 @@ class TopdownTest2 extends Phaser.Scene {
 
     }
 
+    getPlayer(name) {
+        for (let player of this.players) {
+            if (player.name === name) {
+                return player;
+            }
+        }
+        return null;
+    }
 
     playerHitPlayer(playerA, playerB) {
         //player.emit('hitWall', wall);
@@ -634,10 +635,13 @@ class TopdownTest2 extends Phaser.Scene {
             bullet = objB;
             player = objA;
         }
-        if (bullet.getData("shotBy") != player.name) {
+        const shotBy = bullet.getData("shotBy");
+        if (shotBy != player.name) {
             //console.log("" + player.name + " HIT");
             bullet.disableBody(true, true);
             player.bulletHit(bullet);
+            const shotPlayer = this.getPlayer(shotBy);
+            shotPlayer.hitOther(player, bullet);
         }
     }
 
@@ -669,6 +673,19 @@ class TopdownTest2 extends Phaser.Scene {
         bullet.disableBody(true, true);
     }
 
+    restart() {
+        console.log('RESTART');
+        for (let player of this.players) {
+            player.spawn();
+        }
+        const player1 = this.players[0];
+        player1.x = BOUNDS_WIDTH/2;
+        player1.y = 100;
+        const player2 = this.players[1];
+        player2.x = BOUNDS_WIDTH/2;
+        player2.y = BOUNDS_HEIGHT-100;
+    }
+
     update(time, delta) {
         // periodically check for new gamepads
         if (time > this.nextCheckGamepadsTime) {
@@ -682,6 +699,14 @@ class TopdownTest2 extends Phaser.Scene {
                 }
             }
         }
+        // Check for restart
+        const pads = this.input.gamepad.gamepads;
+        for (let pad of pads) {
+            if (pad.buttons[9].value) {
+                this.restart();
+            }
+        }
+
     }
 
 }
