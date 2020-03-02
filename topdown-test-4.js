@@ -19,19 +19,23 @@ if (SCREEN_SPLIT === 'vertical') {
 }
 
 const PLAYER_CONFIG_DEFAULTS = {
-    health: 100,
+    maxHealth: 200,
     speed: 4,
 
+    primaryMaxAmmo: 60,
+    primaryShotAmount: 20,
+    primaryRegenRate: 8,
+
     // number of bullets fired per second
-    primaryFireRate: 0.5,
+    primaryFireRate: 2,
     // damage per bullet
-    primaryDamage: 5,
+    primaryDamage: 20,
     // speed of primary ranged attack
     primarySpeed: 6,
     primaryDistance: 250,
 
     abilityFireRate: 1/4,
-    abilityDamage: 25,
+    abilityDamage: 50,
     abilitySpeed: 6,
     abilityDistance: 250,
 
@@ -56,10 +60,14 @@ class Player extends Phaser.Physics.Arcade.Sprite {
         this.pad = null;
 
         this.configure(config);
+        this.scale = 1.5;
 
         this.reset();
 
         this.lifeBar = this.scene.add.graphics();
+        this.primaryBar = this.scene.add.graphics();
+        this.lifeText = this.scene.add.bitmapText(0, 0, 'atari');
+        this.lifeText.scale = 0.15;
         this.state = 'alive';
 
         this.on('hitWall', this.hitWall, this);
@@ -83,6 +91,11 @@ class Player extends Phaser.Physics.Arcade.Sprite {
         this.coolDowns = {};
         this.bulletGroups = {};
         this.bullets = [];
+    }
+
+    spawn() {
+        this.setData('health', this.getData('maxHealth'));
+        this.setData('primaryAmmo', this.getData('primaryMaxAmmo'));
     }
 
     setupPlayer() {
@@ -152,7 +165,7 @@ class Player extends Phaser.Physics.Arcade.Sprite {
             this.setData(key, config[key]);
         }
 
-        this.setData('maxHealth', config.health);
+        this.setData('maxHealth', config.maxHealth);
     }
 
     setGamepad(pad) {
@@ -170,6 +183,35 @@ class Player extends Phaser.Physics.Arcade.Sprite {
 
     curDashSpeed() {
         return this.getData('dashSpeed');
+    }
+
+    shootPrimary(time, delta) {
+        const ammo = this.getData('primaryAmmo');
+        const shotAmount = this.getData('primaryShotAmount');
+        if (ammo >= shotAmount && this.checkActionRate(time, 'primaryFireRate')) {
+            this.setData('primaryAmmo', Math.max(ammo-shotAmount, 0));
+            const facing = new Vector2(1, 0);
+            Phaser.Math.Rotate(facing, this.rotation);
+            const bulletSpeed = this.getData('primarySpeed') * SPEED_SCALE;
+            this.shootBullet('bullet', this.x, this.y,
+                facing.x*bulletSpeed, facing.y*bulletSpeed,
+                this.getData('primaryDamage'),
+                this.getData('primaryDistance'),
+            );
+        }
+    }
+
+    shootAbility(time, delta) {
+        if (this.checkActionRate(time, 'abilityFireRate')) {
+            const facing = new Vector2(1, 0);
+            Phaser.Math.Rotate(facing, this.rotation);
+            const bulletSpeed = this.getData('abilitySpeed') * SPEED_SCALE;
+            this.shootBullet('rpg', this.x, this.y,
+                facing.x*bulletSpeed, facing.y*bulletSpeed,
+                this.getData('abilityDamage'),
+                this.getData('abilityDistance'),
+            );
+        }
     }
 
     handleKeys(time, delta) {
@@ -210,29 +252,11 @@ class Player extends Phaser.Physics.Arcade.Sprite {
         }
 
         if (this.keys.primaryFire.isDown) {
-            if (this.checkActionRate(time, 'primaryFireRate')) {
-                const facing = new Vector2(1, 0);
-                Phaser.Math.Rotate(facing, this.rotation);
-                const bulletSpeed = this.getData('primarySpeed') * SPEED_SCALE;
-                this.shootBullet('bullet', this.x, this.y,
-                    facing.x*bulletSpeed, facing.y*bulletSpeed,
-                    this.getData('primaryDamage'),
-                    this.getData('primaryDistance'),
-                );
-            }
+            this.shootPrimary(time, delta);
         }
 
         if (this.keys.abilityFire.isDown) {
-            if (this.checkActionRate(time, 'abilityFireRate')) {
-                const facing = new Vector2(1, 0);
-                Phaser.Math.Rotate(facing, this.rotation);
-                const bulletSpeed = this.getData('abilitySpeed') * SPEED_SCALE;
-                this.shootBullet('rpg', this.x, this.y,
-                    facing.x*bulletSpeed, facing.y*bulletSpeed,
-                    this.getData('abilityDamage'),
-                    this.getData('abilityDistance'),
-                );
-            }
+            this.shootAbility(time, delta);
         }
 
         if (this.isDashing) {
@@ -267,30 +291,11 @@ class Player extends Phaser.Physics.Arcade.Sprite {
         this.setVelocity(this.pad.leftStick.x*speedMult, this.pad.leftStick.y*speedMult);
 
         if (this.pad.R1 > 0) {
-            // Draw the cool where I'm going to shoot rectangle
-            if (this.checkActionRate(time, 'primaryFireRate')) {
-                const facing = new Vector2(1, 0);
-                Phaser.Math.Rotate(facing, this.rotation);
-                const bulletSpeed = this.getData('primarySpeed') * SPEED_SCALE;
-                this.shootBullet('bullet', this.x, this.y,
-                    facing.x*bulletSpeed, facing.y*bulletSpeed,
-                    this.getData('primaryDamage'),
-                    this.getData('primaryDistance'),
-                );
-            }
+            this.shootPrimary(time, delta);
         }
 
         if (this.pad.L1 > 0) {
-            if (this.checkActionRate(time, 'abilityFireRate')) {
-                const facing = new Vector2(1, 0);
-                Phaser.Math.Rotate(facing, this.rotation);
-                const bulletSpeed = this.getData('abilitySpeed') * SPEED_SCALE;
-                this.shootBullet('rpg', this.x, this.y,
-                    facing.x*bulletSpeed, facing.y*bulletSpeed,
-                    this.getData('abilityDamage'),
-                    this.getData('abilityDistance'),
-                );
-            }
+            this.shootAbility(time, delta);
         }
 
         if (this.isDashing) {
@@ -314,8 +319,20 @@ class Player extends Phaser.Physics.Arcade.Sprite {
 
     }
 
+    updateAmmo(delta) {
+        const ammo = this.getData('primaryAmmo');
+        const maxAmmo = this.getData('primaryMaxAmmo');
+        if (ammo < maxAmmo) {
+            const ammoRegen = this.getData('primaryRegenRate') * delta;
+            this.setData('primaryAmmo', Math.min(maxAmmo, ammo+ammoRegen));
+        }
+    }
+
     preUpdate(time, delta) {
+        console.log(delta);
         if (this.state != 'dead') {
+            this.updateAmmo(delta / 1000);
+
             if (this.pad) {
                 this.handleGamepad(time, delta);
             } else if (this.keys) {
@@ -339,18 +356,40 @@ class Player extends Phaser.Physics.Arcade.Sprite {
         }
         this.bullets = this.bullets.filter(x => !deadBullets.includes(x));
 
+        this.drawLifeBar();
+        this.drawPrimaryBar();
+
+    }
+
+    drawBar(bar, amount, width, height, y_offset, color) {
+        bar.x = this.x;
+        bar.y = this.y;
+        bar.clear();
+
+        const x_offset = -(width / 2);
+        bar.lineStyle(1, '0x000000', 1.5);
+        bar.strokeRect(x_offset, y_offset, width, height);
+
+        bar.fillStyle(color, 1.0);
+        const barWidth = width * amount;
+        bar.fillRect(x_offset, y_offset, barWidth, height);
+    }
+
+    drawPrimaryBar() {
+        const ammo = this.getData('primaryAmmo');
+        const amount = ammo / this.getData('primaryMaxAmmo');
+
+        this.drawBar(this.primaryBar, amount, 50, 8, -38, 0xE9A009);
+    }
+
+    drawLifeBar() {
         const health = this.getData('health');
-        this.lifeBar.x = this.x;
-        this.lifeBar.y = this.y;
-        this.lifeBar.clear();
+        const amount = health / this.getData('maxHealth');
 
-        this.lifeBar.lineStyle(1, '0x000000', 1.0);
-        this.lifeBar.strokeRect(-10, -30, 20, 6);
-
-        this.lifeBar.fillStyle('0x00FF00', 1.0);
-        const lifeBarWidth = 20 * health / this.getData('maxHealth');
-        this.lifeBar.fillRect(-10, -30, lifeBarWidth, 6);
-
+        this.drawBar(this.lifeBar, amount, 50, 8, -50, 0x10e035);
+        this.lifeText.x = this.x - 15;
+        this.lifeText.y = this.y - 55;
+        this.lifeText.text = health;
     }
 
     die() {
@@ -386,7 +425,7 @@ class TopdownTest2 extends Phaser.Scene {
     preload() {
         this.input.gamepad.on('connected', this.onPadConnected, this);
         //this.load.atlas('assets', 'assets/games/breakout/breakout.png', 'assets/games/breakout/breakout.json');
-        //this.load.bitmapFont('atari', 'assets/fonts/bitmap/atari-smooth.png', 'assets/fonts/bitmap/atari-smooth.xml');
+        this.load.bitmapFont('atari', 'assets/fonts/bitmap/atari-smooth.png', 'assets/fonts/bitmap/atari-smooth.xml');
         this.load.atlas('platformer', 'assets/sets/platformer.png', 'assets/sets/platformer.json');
         this.load.image('ship', 'assets/games/asteroids/ship.png')
         //this.load.image('bullet', 'assets/games/asteroids/bullets.png')
@@ -477,15 +516,15 @@ class TopdownTest2 extends Phaser.Scene {
         this.borderGroup = borderGroup;
 
         const player1Config = {
-            speed: 4,
-            primaryFireRate: 0.7,
-            primaryDamage: 3,
-            primarySpeed: 8,
+            //speed: 4,
+            //primaryFireRate: 0.7,
+            //primaryDamage: 3,
+            //primarySpeed: 8,
         }
 
         const player2Config = {
-            speed: 4,
-            primaryDamage: 6,
+            //speed: 4,
+            //primaryDamage: 6,
         }
 
         this.player = this.createPlayer(0, 100, 300, player1Config);
@@ -510,8 +549,9 @@ class TopdownTest2 extends Phaser.Scene {
         this.players = [this.player, this.player2];
         for (let i = 0; i < 2; i++) {
             const player = this.players[i];
-            player.on('shoot', this.onShoot, this);
+            // player.on('shoot', this.onShoot, this);
             player.setupPlayer();
+            player.spawn();
             //player.on('died', this.onDied, this);
         }
 
@@ -602,6 +642,7 @@ class TopdownTest2 extends Phaser.Scene {
     }
 
 
+    /*
     onShoot(player, x, y, dir_x, dir_y, damage) {
         //console.log("SHOOT", x, y, dir_x, dir_y);
         let bullet = this.bullets.get(x, y, 'bullet')
@@ -613,6 +654,7 @@ class TopdownTest2 extends Phaser.Scene {
             bullet.setVelocity(dir_x, dir_y);
         }
     }
+    */
 
     onWorldBounds(body) {
         const gameObject = body.gameObject;
