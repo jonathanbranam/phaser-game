@@ -254,7 +254,7 @@ class Player extends Phaser.Physics.Arcade.Sprite {
         const speedMult = this.curSpeed() * SPEED_SCALE;
         this.setVelocity(this.pad.leftStick.x*speedMult, this.pad.leftStick.y*speedMult);
 
-        if (this.pad.R2 > 0) {
+        if (this.pad.R1 > 0) {
             if (this.checkActionRate(time, 'primaryFireRate')) {
                 const facing = new Vector2(1, 0);
                 Phaser.Math.Rotate(facing, this.rotation);
@@ -265,7 +265,7 @@ class Player extends Phaser.Physics.Arcade.Sprite {
             }
         }
 
-        if (this.pad.R1 > 0) {
+        if (this.pad.L1 > 0) {
             if (this.checkActionRate(time, 'abilityFireRate')) {
                 const facing = new Vector2(1, 0);
                 Phaser.Math.Rotate(facing, this.rotation);
