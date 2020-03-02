@@ -274,7 +274,9 @@ class Player extends Phaser.Physics.Arcade.Sprite {
                 const bulletSpeed = this.getData('primarySpeed') * SPEED_SCALE;
                 this.shootBullet('bullet', this.x, this.y,
                     facing.x*bulletSpeed, facing.y*bulletSpeed,
-                    this.getData('primaryDamage'));
+                    this.getData('primaryDamage'),
+                    this.getData('primaryDistance'),
+                );
             }
         }
 
@@ -285,7 +287,9 @@ class Player extends Phaser.Physics.Arcade.Sprite {
                 const bulletSpeed = this.getData('abilitySpeed') * SPEED_SCALE;
                 this.shootBullet('rpg', this.x, this.y,
                     facing.x*bulletSpeed, facing.y*bulletSpeed,
-                    this.getData('abilityDamage'));
+                    this.getData('abilityDamage'),
+                    this.getData('abilityDistance'),
+                );
             }
         }
 
@@ -319,6 +323,7 @@ class Player extends Phaser.Physics.Arcade.Sprite {
             }
         }
 
+        const deadBullets = [];
         for (let bullet of this.bullets) {
             const d = Phaser.Math.Distance.Between(
                 bullet.getData('startX'),
@@ -326,10 +331,13 @@ class Player extends Phaser.Physics.Arcade.Sprite {
                 bullet.x,
                 bullet.y
             );
+            //console.log(`Bullet distance ${d}`);
             if (d > bullet.getData('distance')) {
                 bullet.disableBody(true, true);
+                deadBullets.push(bullet);
             }
         }
+        this.bullets = this.bullets.filter(x => !deadBullets.includes(x));
 
         const health = this.getData('health');
         this.lifeBar.x = this.x;
@@ -470,13 +478,14 @@ class TopdownTest2 extends Phaser.Scene {
 
         const player1Config = {
             speed: 4,
-            primaryFireRate: 1,
+            primaryFireRate: 0.7,
             primaryDamage: 3,
             primarySpeed: 8,
         }
 
         const player2Config = {
             speed: 4,
+            primaryDamage: 6,
         }
 
         this.player = this.createPlayer(0, 100, 300, player1Config);
