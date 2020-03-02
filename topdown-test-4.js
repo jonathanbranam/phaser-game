@@ -1,48 +1,11 @@
 const Vector2 = Phaser.Math.Vector2;
 
-function objMerge(a, b) {
-    const r = {};
-    const aKeys = Object.keys(a);
-    // Loop over keys in a
-    for (const key of aKeys) {
-        // If b also has it, then we want b
-        if (b.hasOwnProperty(key)) {
-            // unless it's another object, then merge those
-            if (typeof(b[key]) === 'object') {
-                r[key] = objMerge(a[key], b[key]);
-            } else {
-                r[key] = b[key];
-            }
-        } else {
-            if (typeof(a[key]) === 'object') {
-                r[key] = objMerge(a[key], {});
-            } else {
-                r[key] = a[key];
-            }
-        }
-    }
-    const bKeys = Object.keys(b);
-    // Loop over keys in b
-    for (const key of bKeys) {
-        // If we've haven't already processed this one.
-        if (!aKeys.includes(key)) {
-            if (typeof(b[key]) === 'object') {
-                r[key] = objMerge({}, b[key]);
-            } else {
-                r[key] = b[key];
-            }
-        }
-    }
-    return r;
-}
-
-
 const PLAYER_CONFIG_DEFAULTS = {
     health: 100,
     speed: 4,
 
     // number of bullets fired per second
-    primaryFireRate: 4,
+    primaryFireRate: 2,
     // damage per bullet
     primaryDamage: 5,
     // speed of primary ranged attack
@@ -62,6 +25,7 @@ const PLAYER_CONFIG_DEFAULTS = {
 }
 
 const SPEED_SCALE = 50;
+const KEYBOARD_SPEED_SCALE = 20;
 const DASH_SPEED_SCALE = 50;
 
 class Player extends Phaser.Physics.Arcade.Sprite {
@@ -152,7 +116,7 @@ class Player extends Phaser.Physics.Arcade.Sprite {
 
     configure(config) {
         if (config) {
-            config = objMerge(PLAYER_CONFIG_DEFAULTS, config);
+            config = {...PLAYER_CONFIG_DEFAULTS, ...config};
         } else {
             config = PLAYER_CONFIG_DEFAULTS;
         }
@@ -183,7 +147,8 @@ class Player extends Phaser.Physics.Arcade.Sprite {
     }
 
     handleKeys(time, delta) {
-        const SPEED = 200;
+        //const SPEED = KEYBOARD_SPEED_SCALE;
+        const speedMult = this.curSpeed() * KEYBOARD_SPEED_SCALE;
         let moving = true;
         if (this.keys.up.isDown) {
             if (this.keys.left.isDown) {
@@ -213,7 +178,7 @@ class Player extends Phaser.Physics.Arcade.Sprite {
         let facing = new Vector2(1, 0);
         Phaser.Math.Rotate(facing, this.angle*Phaser.Math.DEG_TO_RAD);
         if (moving) {
-            this.setVelocity(facing.x * SPEED, facing.y * SPEED);
+            this.setVelocity(facing.x * speedMult, facing.y * speedMult);
         } else {
             this.setVelocity(0, 0);
         }
@@ -461,14 +426,14 @@ class TopdownTest2 extends Phaser.Scene {
 
         const player1Config = {
             speed: 6,
-            primaryFireRate: 10,
+            primaryFireRate: 4,
             primaryDamage: 2,
             primarySpeed: 10,
         }
 
         const player2Config = {
             speed: 4,
-            primaryFireRate: 4,
+            primaryFireRate: 1,
         }
 
         this.player = this.createPlayer(0, 100, 300, player1Config);
