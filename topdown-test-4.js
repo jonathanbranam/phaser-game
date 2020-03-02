@@ -95,6 +95,7 @@ class Player extends Phaser.Physics.Arcade.Sprite {
     }
 
     spawn() {
+        this.state = 'alive';
         this.setData('health', this.getData('maxHealth'));
         this.setData('primaryAmmo', this.getData('primaryMaxAmmo'));
     }
