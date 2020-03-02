@@ -45,7 +45,7 @@ const PLAYER_CONFIG_DEFAULTS = {
 }
 
 const SPEED_SCALE = 50;
-const KEYBOARD_SPEED_SCALE = 20;
+const KEYBOARD_SPEED_SCALE = 50;
 const DASH_SPEED_SCALE = 50;
 
 class Player extends Phaser.Physics.Arcade.Sprite {
@@ -267,6 +267,7 @@ class Player extends Phaser.Physics.Arcade.Sprite {
         this.setVelocity(this.pad.leftStick.x*speedMult, this.pad.leftStick.y*speedMult);
 
         if (this.pad.R1 > 0) {
+            // Draw the cool where I'm going to shoot rectangle
             if (this.checkActionRate(time, 'primaryFireRate')) {
                 const facing = new Vector2(1, 0);
                 Phaser.Math.Rotate(facing, this.rotation);
@@ -325,7 +326,6 @@ class Player extends Phaser.Physics.Arcade.Sprite {
                 bullet.x,
                 bullet.y
             );
-            console.log(`Bullet distance: ${d}`);
             if (d > bullet.getData('distance')) {
                 bullet.disableBody(true, true);
             }
