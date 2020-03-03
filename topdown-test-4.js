@@ -1,9 +1,12 @@
 const Vector2 = Phaser.Math.Vector2;
 
+const TILE_SIZE = 32;
 const SCREEN_WIDTH = 800;
 const SCREEN_HEIGHT = 400;
-const BOUNDS_WIDTH = 1000;
-const BOUNDS_HEIGHT = 1200;
+//const BOUNDS_WIDTH = 1000;
+//const BOUNDS_HEIGHT = 1200;
+const BOUNDS_WIDTH = 32 * 30;
+const BOUNDS_HEIGHT = 32 * 30;
 const SCREEN_SPLIT = 'vertical';
 //const SCREEN_SPLIT = 'horizontal';
 //const SCREEN_SPLIT = 'orignal';
@@ -53,17 +56,17 @@ const PLAYER_CONFIG_DEFAULTS = {
     primaryDamage: 20,
     // speed of primary ranged attack
     primarySpeed: 6,
-    primaryDistance: 250,
-    primaryLength: 30,
+    primaryDistance: 200,
+    primaryLength: 22,
 
-    weaponFireOffset: 20,
+    weaponFireOffset: 0,
 
     abilityMaxCharge: 100,
     abilityChargeRate: 20,
     abilityDamage: 50,
     abilitySpeed: 6,
-    abilityDistance: 250,
-    abilityLength: 50,
+    abilityDistance: 200,
+    abilityLength: 36,
 
     ultMaxCharge: 150,
     ultChargeRate: 1,
@@ -173,7 +176,6 @@ class Player extends Phaser.Physics.Arcade.Sprite {
         const bullet = this.bulletGroups[key].get(x, y, key)
         if (bullet) {
             bullet.type = 'bullet';
-            bullet.scale = 1;
 
             // TODO: Offset the weapon more for larger bullets
             const weaponFireOffset = this.getData('weaponFireOffset') +
@@ -400,7 +402,7 @@ class Player extends Phaser.Physics.Arcade.Sprite {
 
         this.targetDisplay.fillStyle(0xFFFFFF, 0.2);
         const width = 50;
-        this.targetDisplay.fillRect(-width/2, fireOffset,
+        this.targetDisplay.fillRect(-width/2, fireOffset + primaryLength/2,
             width, primaryDistance + primaryLength + fireOffset);
     }
 
@@ -562,6 +564,8 @@ class TopdownTest2 extends Phaser.Scene {
         this.load.bitmapFont('atari', 'assets/fonts/bitmap/atari-smooth.png', 'assets/fonts/bitmap/atari-smooth.xml');
         this.load.atlas('platformer', 'assets/sets/platformer.png', 'assets/sets/platformer.json');
         this.load.atlas('desert', 'phaser-assets/backgrounds/desert-1.png', 'phaser-assets/backgrounds/desert-1.json');
+        this.load.text('desert-1', 'maps/desert-1.txt');
+
         this.load.image('ship', 'assets/games/asteroids/ship.png')
         //this.load.image('bullet', 'assets/games/asteroids/bullets.png')
         this.load.image('bullet', 'assets/sprites/bullets/bullet5.png')
@@ -633,11 +637,26 @@ class TopdownTest2 extends Phaser.Scene {
 
         const walls = this.physics.add.staticGroup();
 
-        for (let i = 0; i < 15; i++) {
-            const x = Phaser.Math.RND.integerInRange(100, 1500);
-            const y = Phaser.Math.RND.integerInRange(100, 1100);
-            //walls.add(this.add.tileSprite(x, y, 90, 54, 'platformer', 'rock').setOrigin(0));
-            walls.add(this.add.tileSprite(x, y, 32, 32, 'desert', 'wall-unconnected').setOrigin(0));
+        if (false) {
+            // random walls
+            for (let i = 0; i < 15; i++) {
+                const x = Phaser.Math.RND.integerInRange(100, 1500);
+                const y = Phaser.Math.RND.integerInRange(100, 1100);
+                //walls.add(this.add.tileSprite(x, y, 90, 54, 'platformer', 'rock').setOrigin(0));
+                walls.add(this.add.tileSprite(x, y, 32, 32, 'desert', 'wall-unconnected').setOrigin(0));
+            }
+        } else {
+            const map = this.cache.text.get('desert-1');
+            const mapLines = map.split('\n');
+            for (let y = 0; (y+1) < mapLines.length; y++) {
+                const row = mapLines[y];
+                console.log(row);
+                for (let x = 0; x < row.length; x++) {
+                    if (row[x] === 'X') {
+                        walls.add(this.add.tileSprite(x*32, y*32, 32, 32, 'desert', 'wall-unconnected').setOrigin(0));
+                    }
+                }
+            }
         }
 
 
