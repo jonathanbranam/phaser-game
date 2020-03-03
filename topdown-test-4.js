@@ -22,12 +22,12 @@ const PLAYER_CONFIG_DEFAULTS = {
     maxHealth: 200,
     speed: 4,
 
-    primaryMaxAmmo: 60,
+    primaryMaxCharge: 60,
     primaryShotAmount: 20,
     primaryRegenRate: 8,
 
     // number of bullets fired per second
-    primaryFireRate: 2,
+    primaryFireRate: 3,
     // damage per bullet
     primaryDamage: 20,
     // speed of primary ranged attack
@@ -35,10 +35,13 @@ const PLAYER_CONFIG_DEFAULTS = {
     primaryDistance: 250,
 
     abilityMaxCharge: 100,
-    abilityFireRate: 1/4,
+    abilityChargeRate: 20,
     abilityDamage: 50,
     abilitySpeed: 6,
     abilityDistance: 250,
+
+    ultMaxCharge: 150,
+    ultChargeRate: 1,
 
     // Dashes
     // number of dashes per second
@@ -65,6 +68,7 @@ class Player extends Phaser.Physics.Arcade.Sprite {
 
         this.reset();
 
+        this.abilityArc = this.scene.add.graphics();
         this.lifeBar = this.scene.add.graphics();
         this.primaryBar = this.scene.add.graphics();
         this.lifeText = this.scene.add.bitmapText(0, 0, 'atari');
@@ -97,7 +101,9 @@ class Player extends Phaser.Physics.Arcade.Sprite {
     spawn() {
         this.state = 'alive';
         this.setData('health', this.getData('maxHealth'));
-        this.setData('primaryAmmo', this.getData('primaryMaxAmmo'));
+        this.setData('primaryCharge', this.getData('primaryMaxCharge'));
+        this.setData('abilityCharge', 0);
+        this.setData('ultCharge', 0);
     }
 
     setupPlayer() {
@@ -188,10 +194,10 @@ class Player extends Phaser.Physics.Arcade.Sprite {
     }
 
     shootPrimary(time, delta) {
-        const ammo = this.getData('primaryAmmo');
+        const charge = this.getData('primaryCharge');
         const shotAmount = this.getData('primaryShotAmount');
-        if (ammo >= shotAmount && this.checkActionRate(time, 'primaryFireRate')) {
-            this.setData('primaryAmmo', Math.max(ammo-shotAmount, 0));
+        if (charge >= shotAmount && this.checkActionRate(time, 'primaryFireRate')) {
+            this.setData('primaryCharge', Math.max(charge-shotAmount, 0));
             const facing = new Vector2(1, 0);
             Phaser.Math.Rotate(facing, this.rotation);
             const bulletSpeed = this.getData('primarySpeed') * SPEED_SCALE;
@@ -204,7 +210,10 @@ class Player extends Phaser.Physics.Arcade.Sprite {
     }
 
     shootAbility(time, delta) {
-        if (this.checkActionRate(time, 'abilityFireRate')) {
+        const charge = this.getData('abilityCharge');
+        const maxCharge = this.getData('abilityMaxCharge');
+        if (maxCharge - charge < 1) {
+            this.setData('abilityCharge', 0);
             const facing = new Vector2(1, 0);
             Phaser.Math.Rotate(facing, this.rotation);
             const bulletSpeed = this.getData('abilitySpeed') * SPEED_SCALE;
@@ -311,11 +320,29 @@ class Player extends Phaser.Physics.Arcade.Sprite {
     }
 
     updateAmmo(delta) {
-        const ammo = this.getData('primaryAmmo');
-        const maxAmmo = this.getData('primaryMaxAmmo');
-        if (ammo < maxAmmo) {
+        this.updatePrimary(delta);
+        this.updateAbility(delta);
+        this.updateUlt(delta);
+    }
+
+    updateUlt(delta) {
+    }
+
+    updateAbility(delta) {
+        const charge = this.getData('abilityCharge');
+        const maxCharge = this.getData('abilityMaxCharge');
+        if (charge < maxCharge) {
+            const ammoRegen = this.getData('abilityChargeRate') * (delta / 1000);
+            this.setData('abilityCharge', Math.min(maxCharge, charge+ammoRegen));
+        }
+    }
+
+    updatePrimary(delta) {
+        const charge = this.getData('primaryCharge');
+        const maxCharge = this.getData('primaryMaxCharge');
+        if (charge < maxCharge) {
             const ammoRegen = this.getData('primaryRegenRate') * (delta / 1000);
-            this.setData('primaryAmmo', Math.min(maxAmmo, ammo+ammoRegen));
+            this.setData('primaryCharge', Math.min(maxCharge, charge+ammoRegen));
         }
     }
 
@@ -348,28 +375,55 @@ class Player extends Phaser.Physics.Arcade.Sprite {
 
         this.drawLifeBar();
         this.drawPrimaryBar();
-
+        this.drawAbilityCharge();
     }
 
-    drawBar(bar, amount, width, height, y_offset, color) {
-        bar.x = this.x;
-        bar.y = this.y;
-        bar.clear();
+    drawBar(g, amount, width, height, y_offset, color) {
+        g.x = this.x;
+        g.y = this.y;
+        g.clear();
 
         const x_offset = -(width / 2);
-        bar.lineStyle(1, '0x000000', 2);
-        bar.strokeRect(x_offset, y_offset, width, height);
+        g.lineStyle(1, '0x000000', 2);
+        g.strokeRect(x_offset, y_offset, width, height);
 
-        bar.fillStyle(color, 1.0);
+        g.fillStyle(color, 1.0);
         const barWidth = width * amount;
-        bar.fillRect(x_offset, y_offset, barWidth, height);
+        g.fillRect(x_offset, y_offset, barWidth, height);
+    }
+
+    drawArc(g, amount, radius, thickness, x, y, color, alpha=1.0) {
+        //console.log(`drawArc(g, ${amount}, ${radius}, ${thickness}, ${x}, ${y}, ${color}`);
+        g.x = x;
+        g.y = y;
+        g.clear();
+
+        g.beginPath();
+        g.fillStyle(color, alpha);
+        const start = -Math.PI/2;
+        const end = start + amount*Math.PI*2;
+        g.arc(0, 0, radius+thickness, start, end);
+        g.arc(0, 0, radius, end, start, true);
+        g.closePath();
+        g.strokePath();
+        g.fillPath();
     }
 
     drawPrimaryBar() {
-        const ammo = this.getData('primaryAmmo');
-        const amount = ammo / this.getData('primaryMaxAmmo');
+        const charge = this.getData('primaryCharge');
+        const amount = charge / this.getData('primaryMaxCharge');
 
         this.drawBar(this.primaryBar, amount, 50, 8, -38, 0xE9A009);
+    }
+
+    drawAbilityCharge() {
+        const charge = this.getData('abilityCharge');
+        const amount = charge / this.getData('abilityMaxCharge');
+
+        //console.log(`Ability charge ${amount}`);
+
+        //this.drawArc(this.abilityArc, amount, 50, 10, 50, 50, 0xE93009);
+        this.drawArc(this.abilityArc, amount, 25, 8, this.x, this.y, 0xE93009, 0.5);
     }
 
     drawLifeBar() {
