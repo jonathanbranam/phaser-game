@@ -1,8 +1,8 @@
 const Vector2 = Phaser.Math.Vector2;
 
-const GAME_WIDTH = 1080;
-const GAME_HEIGHT = 600;
-const BOUNDS_WIDTH = 1600;
+const SCREEN_WIDTH = 1080;
+const SCREEN_HEIGHT = 600;
+const BOUNDS_WIDTH = 1000;
 const BOUNDS_HEIGHT = 1200;
 const SCREEN_SPLIT = 'vertical';
 //const SCREEN_SPLIT = 'horizontal';
@@ -11,11 +11,11 @@ const SCREEN_SPLIT = 'vertical';
 let CAMERA_WIDTH = null;
 let CAMERA_HEIGHT = null;
 if (SCREEN_SPLIT === 'vertical') {
-    CAMERA_WIDTH = Math.round(GAME_WIDTH / 2);
-    CAMERA_HEIGHT = GAME_HEIGHT;
+    CAMERA_WIDTH = Math.round(SCREEN_WIDTH / 2);
+    CAMERA_HEIGHT = SCREEN_HEIGHT;
 } else if (SCREEN_SPLIT === 'horizontal') {
-    CAMERA_WIDTH = GAME_WIDTH;
-    CAMERA_HEIGHT = Math.round(GAME_HEIGHT / 2);
+    CAMERA_WIDTH = SCREEN_WIDTH;
+    CAMERA_HEIGHT = Math.round(SCREEN_HEIGHT / 2);
 }
 
 let gameCameras = null;
@@ -34,7 +34,6 @@ function ignoreFromOtherCameras(includeCameras, allCameras, objects) {
     // loop through all other cameras and hide
     for (let camera of allCameras) {
         if (!includeCameras.includes(camera)) {
-            console.log('ignoring', camera);
             camera.ignore(objects);
         }
     }
@@ -55,12 +54,16 @@ const PLAYER_CONFIG_DEFAULTS = {
     // speed of primary ranged attack
     primarySpeed: 6,
     primaryDistance: 250,
+    primaryLength: 30,
+
+    weaponFireOffset: 20,
 
     abilityMaxCharge: 100,
     abilityChargeRate: 20,
     abilityDamage: 50,
     abilitySpeed: 6,
     abilityDistance: 250,
+    abilityLength: 50,
 
     ultMaxCharge: 150,
     ultChargeRate: 1,
@@ -90,6 +93,7 @@ class Player extends Phaser.Physics.Arcade.Sprite {
 
         this.reset();
 
+        this.targetDisplay = this.scene.add.graphics();
         this.lifeBar = this.scene.add.graphics();
         this.otherLifeBar = this.scene.add.graphics();
         this.primaryBar = this.scene.add.graphics();
@@ -137,7 +141,7 @@ class Player extends Phaser.Physics.Arcade.Sprite {
         // create gui elements
         // some on our main camera
         ignoreFromOtherCameras([this.camera], gameCameras,
-            [this.lifeBar, this.primaryBar]);
+            [this.lifeBar, this.primaryBar, this.targetDisplay]);
         showInOtherCameras([this.camera], gameCameras,
             [this.otherLifeBar]);
         // some on our gui camera
@@ -165,11 +169,20 @@ class Player extends Phaser.Physics.Arcade.Sprite {
         this.bulletGroups[key] = bulletGroup;
     }
 
-    shootBullet(key, x, y, vel_x, vel_y, damage, distance) {
+    shootBullet(key, x, y, vel_x, vel_y, damage, distance, bulletLength) {
         const bullet = this.bulletGroups[key].get(x, y, key)
         if (bullet) {
             bullet.type = 'bullet';
             bullet.scale = 3;
+
+            // TODO: Offset the weapon more for larger bullets
+            const weaponFireOffset = this.getData('weaponFireOffset') +
+                bulletLength;
+            const facing = new Vector2(weaponFireOffset, 0);
+            Phaser.Math.Rotate(facing, this.rotation);
+            x += facing.x;
+            y += facing.y;
+
             bullet.setData('startX', x);
             bullet.setData('startY', y);
             bullet.setData('shotBy', this.name);
@@ -249,6 +262,7 @@ class Player extends Phaser.Physics.Arcade.Sprite {
                 facing.x*bulletSpeed, facing.y*bulletSpeed,
                 this.getData('primaryDamage'),
                 this.getData('primaryDistance'),
+                this.getData('primaryLength'),
             );
         }
     }
@@ -265,6 +279,7 @@ class Player extends Phaser.Physics.Arcade.Sprite {
                 facing.x*bulletSpeed, facing.y*bulletSpeed,
                 this.getData('abilityDamage'),
                 this.getData('abilityDistance'),
+                this.getData('abilityLength'),
             );
         }
     }
@@ -330,15 +345,16 @@ class Player extends Phaser.Physics.Arcade.Sprite {
             const a = Phaser.Math.Angle.Between(0, 0, this.pad.rightStick.x, this.pad.rightStick.y);
             //console.log(this.pad.leftStick, a*Phaser.Math.RAD_TO_DEG);
             this.rotation = a;
+            this.showTargetDisplay = true;
         }
         const speedMult = this.curSpeed() * SPEED_SCALE;
         this.setVelocity(this.pad.leftStick.x*speedMult, this.pad.leftStick.y*speedMult);
 
-        if (this.pad.R1 > 0) {
+        if (this.pad.R2 > 0) {
             this.shootPrimary(time, delta);
         }
 
-        if (this.pad.L1 > 0) {
+        if (this.pad.L2 > 0) {
             this.shootAbility(time, delta);
         }
 
@@ -363,10 +379,29 @@ class Player extends Phaser.Physics.Arcade.Sprite {
 
     }
 
-    updateAmmo(delta) {
+    updateCharge(delta) {
         this.updatePrimary(delta);
         this.updateAbility(delta);
         this.updateUlt(delta);
+    }
+
+    drawTargeting(delta) {
+        this.targetDisplay.clear();
+        if (!this.showTargetDisplay) {
+            return;
+        }
+        this.targetDisplay.x = this.x;
+        this.targetDisplay.y = this.y;
+        this.targetDisplay.rotation = this.rotation - Math.PI/2;
+
+        const fireOffset = this.getData('weaponFireOffset');
+        const primaryDistance = this.getData('primaryDistance');
+        const primaryLength = this.getData('primaryLength');
+
+        this.targetDisplay.fillStyle(0xFFFFFF, 0.2);
+        const width = 50;
+        this.targetDisplay.fillRect(-width/2, fireOffset,
+            width, primaryDistance + primaryLength + fireOffset);
     }
 
     updateUlt(delta) {
@@ -392,13 +427,15 @@ class Player extends Phaser.Physics.Arcade.Sprite {
 
     preUpdate(time, delta) {
         if (this.state != 'dead') {
-            this.updateAmmo(delta);
+            this.updateCharge(delta);
 
             if (this.pad) {
                 this.handleGamepad(time, delta);
             } else if (this.keys) {
                 this.handleKeys(time, delta);
             }
+        } else {
+            this.showTargetDisplay = false;
         }
 
         const deadBullets = [];
@@ -417,6 +454,7 @@ class Player extends Phaser.Physics.Arcade.Sprite {
         }
         this.bullets = this.bullets.filter(x => !deadBullets.includes(x));
 
+        this.drawTargeting(delta);
         this.drawLifeBar();
         this.drawPrimaryBar();
         this.drawAbilityCharge();
@@ -657,7 +695,7 @@ class TopdownTest2 extends Phaser.Scene {
             this.cameras.main.setViewport(0, 0, CAMERA_WIDTH, CAMERA_HEIGHT)
             this.camera2.setViewport(CAMERA_WIDTH, 0, CAMERA_WIDTH, CAMERA_HEIGHT)
         } else if (SCREEN_SPLIT === 'horizontal') {
-            //this.camera2 = this.cameras.add(0, 0, GAME_WIDTH, GAME_HEIGHT);
+            //this.camera2 = this.cameras.add(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
             this.camera2 = this.cameras.add(0, 0, CAMERA_WIDTH, CAMERA_HEIGHT);
             this.cameras.main.setViewport(0, 0, CAMERA_WIDTH, CAMERA_HEIGHT)
             this.camera2.setViewport(0, CAMERA_HEIGHT, CAMERA_WIDTH, CAMERA_HEIGHT)
@@ -885,8 +923,8 @@ const config = {
     scale: {
         parent: 'body',
         mode: Phaser.Scale.FIT,
-        width: GAME_WIDTH,
-        height: GAME_HEIGHT
+        width: SCREEN_WIDTH,
+        height: SCREEN_HEIGHT
         //autoRound: true,
     },
     input: {
