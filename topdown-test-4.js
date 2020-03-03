@@ -18,6 +18,28 @@ if (SCREEN_SPLIT === 'vertical') {
     CAMERA_HEIGHT = Math.round(GAME_HEIGHT / 2);
 }
 
+let gameCameras = null;
+let guiCameras = null;
+
+function showInOtherCameras(ignoreCameras, allCameras, objects) {
+    // loop through all other cameras and hide
+    for (let camera of allCameras) {
+        if (ignoreCameras.includes(camera)) {
+            camera.ignore(objects);
+        }
+    }
+}
+
+function ignoreFromOtherCameras(includeCameras, allCameras, objects) {
+    // loop through all other cameras and hide
+    for (let camera of allCameras) {
+        if (!includeCameras.includes(camera)) {
+            console.log('ignoring', camera);
+            camera.ignore(objects);
+        }
+    }
+}
+
 const PLAYER_CONFIG_DEFAULTS = {
     maxHealth: 200,
     speed: 4,
@@ -68,8 +90,8 @@ class Player extends Phaser.Physics.Arcade.Sprite {
 
         this.reset();
 
-        this.abilityArc = this.scene.add.graphics();
         this.lifeBar = this.scene.add.graphics();
+        this.otherLifeBar = this.scene.add.graphics();
         this.primaryBar = this.scene.add.graphics();
         this.lifeText = this.scene.add.bitmapText(0, 0, 'atari');
         this.lifeText.scale = 0.15;
@@ -105,6 +127,24 @@ class Player extends Phaser.Physics.Arcade.Sprite {
         this.setData('abilityCharge', 0);
         this.setData('ultCharge', 0);
     }
+
+    setGuiCamera(camera) {
+        this.guiCamera = camera;
+        this.setupGui();
+    }
+
+    setupGui() {
+        // create gui elements
+        // some on our main camera
+        ignoreFromOtherCameras([this.camera], gameCameras,
+            [this.lifeBar, this.primaryBar]);
+        showInOtherCameras([this.camera], gameCameras,
+            [this.otherLifeBar]);
+        // some on our gui camera
+        this.abilityArc = this.guiCamera.scene.add.graphics();
+        ignoreFromOtherCameras([this.guiCamera], guiCameras, this.abilityArc);
+    }
+
 
     setCamera(camera) {
         this.camera = camera;
@@ -421,16 +461,15 @@ class Player extends Phaser.Physics.Arcade.Sprite {
     }
 
     drawAbilityCharge() {
+        if (!this.abilityArc) {
+            return;
+        }
         const charge = this.getData('abilityCharge');
         const amount = charge / this.getData('abilityMaxCharge');
 
-        //console.log(`Ability charge ${amount}`);
-
-        //this.drawArc(this.abilityArc, amount, 50, 10, 50, 50, 0xE93009);
-        const x = this.camera.scrollX + 50;
-        const y = this.camera.scrollY + CAMERA_HEIGHT-50;
-        this.drawArc(this.abilityArc, amount, 20, 8, x, y, 0xA99009);
-        //this.drawArc(this.abilityArc, amount, 25, 8, this.x, this.y, 0xE93009, 0.5);
+        const x = 35
+        const y = CAMERA_HEIGHT - 55;
+        this.drawArc(this.abilityArc, amount, 15, 8, x, y, 0xFBE031);
     }
 
     drawLifeBar() {
@@ -438,6 +477,7 @@ class Player extends Phaser.Physics.Arcade.Sprite {
         const amount = health / this.getData('maxHealth');
 
         this.drawBar(this.lifeBar, amount, 50, 8, -50, 0x10e035);
+        this.drawBar(this.otherLifeBar, amount, 50, 8, -50, 0xD03035);
         this.lifeText.x = this.x - 15;
         this.lifeText.y = this.y - 55;
         this.lifeText.text = health;
@@ -475,6 +515,7 @@ class TopdownTest2 extends Phaser.Scene {
         super({ key: 'topdown', active: true });
         this.gamepadsConnected = {};
         this.nextCheckGamepadsTime = 1000;
+        this.handledGuiCameras = false;
     }
 
     preload() {
@@ -636,6 +677,8 @@ class TopdownTest2 extends Phaser.Scene {
         this.player.camera = this.cameras.main;
         this.player2.camera = this.camera2;
 
+        gameCameras = [this.cameras.main, this.camera2];
+
         //this.player = new Player(this, 400, 300, 'ship')
         //this.add.existing(this.player);
         //this.physics.add.existing(this.player);
@@ -751,6 +794,13 @@ class TopdownTest2 extends Phaser.Scene {
     }
 
     update(time, delta) {
+        if (!this.handledGuiCameras) {
+            if (guiCameras) {
+                this.players[0].setGuiCamera(guiCameras[0]);
+                this.players[1].setGuiCamera(guiCameras[1]);
+                this.handledGuiCameras = true;
+            }
+        }
         // periodically check for new gamepads
         if (time > this.nextCheckGamepadsTime) {
             const GAMEPAD_CHECK_TIME = 1000;
@@ -807,6 +857,23 @@ class TopdownGUI extends Phaser.Scene {
             borders.fillRectShape(centerLine);
         }
 
+        let camera1 = null;
+        let camera2 = null;
+        //camera1 = this.cameras.add(0, 0, CAMERA_WIDTH, CAMERA_HEIGHT);
+        camera1 = this.cameras.main;
+        camera2 = this.cameras.add(0, 0, CAMERA_WIDTH, CAMERA_HEIGHT);
+        if (SCREEN_SPLIT === 'vertical') {
+            camera1.setViewport(0, 0, CAMERA_WIDTH, CAMERA_HEIGHT)
+            camera2.setViewport(CAMERA_WIDTH, 0, CAMERA_WIDTH, CAMERA_HEIGHT)
+        } else if (SCREEN_SPLIT === 'horizontal') {
+            camera1.setViewport(0, 0, CAMERA_WIDTH, CAMERA_HEIGHT)
+            camera2.setViewport(0, CAMERA_HEIGHT, CAMERA_WIDTH, CAMERA_HEIGHT)
+        }
+        //guiCameras = [camera1, camera2, this.cameras.main];
+        guiCameras = [camera1, camera2];
+    }
+
+    update(time, delta) {
     }
 
 }
