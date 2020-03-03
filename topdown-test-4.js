@@ -5,8 +5,8 @@ const SCREEN_WIDTH = 800;
 const SCREEN_HEIGHT = 400;
 //const BOUNDS_WIDTH = 1000;
 //const BOUNDS_HEIGHT = 1200;
-const BOUNDS_WIDTH = 32 * 30;
-const BOUNDS_HEIGHT = 32 * 30;
+const BOUNDS_WIDTH = 32 * 32;
+const BOUNDS_HEIGHT = 32 * 32;
 const SCREEN_SPLIT = 'vertical';
 //const SCREEN_SPLIT = 'horizontal';
 //const SCREEN_SPLIT = 'orignal';
@@ -653,7 +653,7 @@ class TopdownTest2 extends Phaser.Scene {
                 console.log(row);
                 for (let x = 0; x < row.length; x++) {
                     if (row[x] === 'X') {
-                        walls.add(this.add.tileSprite(x*32, y*32, 32, 32, 'desert', 'wall-unconnected').setOrigin(0));
+                        walls.add(this.add.tileSprite((x+1)*32, (y+1)*32, 32, 32, 'desert', 'wall-unconnected').setOrigin(0));
                     }
                 }
             }
@@ -662,7 +662,7 @@ class TopdownTest2 extends Phaser.Scene {
 
         // Create World Border
         const borderGroup = this.physics.add.staticGroup();
-        const BORDER_SIZE = 20;
+        const BORDER_SIZE = 32;
         borderGroup.add(this.add.rectangle(0, 0, BOUNDS_WIDTH, BORDER_SIZE, 0x202020).setOrigin(0))
         borderGroup.add(this.add.rectangle(0, BOUNDS_HEIGHT-BORDER_SIZE, BOUNDS_WIDTH, BORDER_SIZE, 0x202020).setOrigin(0))
         borderGroup.add(this.add.rectangle(0, 0, BORDER_SIZE, BOUNDS_HEIGHT, 0x202020).setOrigin(0))
