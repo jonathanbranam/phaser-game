@@ -106,6 +106,10 @@ class Player extends Phaser.Physics.Arcade.Sprite {
         this.setData('ultCharge', 0);
     }
 
+    setCamera(camera) {
+        this.camera = camera;
+    }
+
     setupPlayer() {
         this.setupBulletGroup('bullet');
         this.setupBulletGroup('rpg');
@@ -423,7 +427,10 @@ class Player extends Phaser.Physics.Arcade.Sprite {
         //console.log(`Ability charge ${amount}`);
 
         //this.drawArc(this.abilityArc, amount, 50, 10, 50, 50, 0xE93009);
-        this.drawArc(this.abilityArc, amount, 25, 8, this.x, this.y, 0xE93009, 0.5);
+        const x = this.camera.scrollX + 50;
+        const y = this.camera.scrollY + CAMERA_HEIGHT-50;
+        this.drawArc(this.abilityArc, amount, 20, 8, x, y, 0xA99009);
+        //this.drawArc(this.abilityArc, amount, 25, 8, this.x, this.y, 0xE93009, 0.5);
     }
 
     drawLifeBar() {
@@ -623,7 +630,9 @@ class TopdownTest2 extends Phaser.Scene {
         this.camera2.setBounds(0, 0, BOUNDS_WIDTH, BOUNDS_HEIGHT);
 
         this.cameras.main.startFollow(this.player, true, 0.2, 0.2);
+        this.player.setCamera(this.cameras.main);
         this.camera2.startFollow(this.player2, true, 0.2, 0.2);
+        this.player2.setCamera(this.camera2);
         this.player.camera = this.cameras.main;
         this.player2.camera = this.camera2;
 
