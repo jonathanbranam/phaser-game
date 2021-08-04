@@ -1,4 +1,8 @@
 
+const CONFIG_SCALE = {
+    speed: 3/4,
+}
+
 const PLAYER_CONFIG_DEFAULTS = {
     maxHealth: 200,
     speed: 4,
@@ -12,7 +16,7 @@ const PLAYER_CONFIG_DEFAULTS = {
     // damage per bullet
     primaryDamage: 20,
     // speed of primary ranged attack
-    primarySpeed: 6,
+    primarySpeed: 10,
     primaryDistance: 200,
     primaryLength: 22,
 
@@ -186,7 +190,11 @@ class Player extends Phaser.Physics.Arcade.Sprite {
 
         const configKeys = Object.keys(config);
         for (const key of configKeys) {
-            this.setData(key, config[key]);
+            let scale = 1.0;
+            if (key in CONFIG_SCALE) {
+                scale = CONFIG_SCALE[key]
+            }
+            this.setData(key, config[key] * scale);
         }
     }
 
