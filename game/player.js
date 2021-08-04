@@ -19,6 +19,7 @@ const PLAYER_CONFIG_DEFAULTS = {
     primarySpeed: 15,
     primaryDistance: 200,
     primaryLength: 22,
+    primaryTexture: 'bullet',
 
     abilityMaxCharge: 100,
     abilityChargeRate: 20,
@@ -26,6 +27,7 @@ const PLAYER_CONFIG_DEFAULTS = {
     abilitySpeed: 6,
     abilityDistance: 200,
     abilityLength: 36,
+    abilityTexture: 'rpg',
 
     ultMaxCharge: 150,
     ultChargeRate: 1,
@@ -117,11 +119,12 @@ class Player extends Phaser.Physics.Arcade.Sprite {
     }
 
     setupPlayer() {
-        this.setupBulletGroup('bullet');
-        this.setupBulletGroup('rpg');
+        this.setupBulletGroup(this.getData('primaryTexture'));
+        this.setupBulletGroup(this.getData('abilityTexture'));
     }
 
     setupBulletGroup(key) {
+        console.log(`setupBulletGroup(${key})`);
         const bulletGroup = this.scene.physics.add.group({
             maxSize: 100,
             collideWorldBounds: true,
@@ -131,6 +134,10 @@ class Player extends Phaser.Physics.Arcade.Sprite {
         this.bulletGroups[key] = bulletGroup;
     }
 
+    configureBullet(bullet, key) {
+        // Override in subclass
+    }
+    
     shootBullet(key, x, y, vel_x, vel_y, damage, distance, bulletLength) {
         const bullet = this.bulletGroups[key].get(x, y, key)
         if (bullet) {
@@ -151,6 +158,9 @@ class Player extends Phaser.Physics.Arcade.Sprite {
             bullet.enableBody(true, x, y, true, true);
             bullet.setVelocity(vel_x, vel_y);
             bullet.rotation = this.rotation;
+            
+            this.configureBullet(bullet, key);
+
             this.bullets.push(bullet);
         }
     }
@@ -186,11 +196,15 @@ class Player extends Phaser.Physics.Arcade.Sprite {
 
         const configKeys = Object.keys(config);
         for (const key of configKeys) {
-            let scale = 1.0;
-            if (key in CONFIG_SCALE) {
-                scale = CONFIG_SCALE[key]
-            }
-            this.setData(key, config[key] * scale);
+            if (typeof config[key] === 'number') {
+                let scale = 1.0;
+                if (key in CONFIG_SCALE) {
+                    scale = CONFIG_SCALE[key]
+                }
+                this.setData(key, config[key] * scale);
+                } else {
+                    this.setData(key, config[key]);
+                }
         }
     }
 
@@ -219,7 +233,7 @@ class Player extends Phaser.Physics.Arcade.Sprite {
             const facing = new Vector2(1, 0);
             Phaser.Math.Rotate(facing, this.rotation);
             const bulletSpeed = this.getData('primarySpeed') * SPEED_SCALE;
-            this.shootBullet('bullet', this.x, this.y,
+            this.shootBullet(this.getData('primaryTexture'), this.x, this.y,
                 facing.x*bulletSpeed, facing.y*bulletSpeed,
                 this.getData('primaryDamage'),
                 this.getData('primaryDistance'),
@@ -236,7 +250,7 @@ class Player extends Phaser.Physics.Arcade.Sprite {
             const facing = new Vector2(1, 0);
             Phaser.Math.Rotate(facing, this.rotation);
             const bulletSpeed = this.getData('abilitySpeed') * SPEED_SCALE;
-            this.shootBullet('rpg', this.x, this.y,
+            this.shootBullet(this.getData('abilityTexture'), this.x, this.y,
                 facing.x*bulletSpeed, facing.y*bulletSpeed,
                 this.getData('abilityDamage'),
                 this.getData('abilityDistance'),

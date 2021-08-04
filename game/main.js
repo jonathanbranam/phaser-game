@@ -65,6 +65,9 @@ class WorldScene extends Phaser.Scene {
         this.load.image('rpg', 'assets/sprites/bullets/bullet10.png')
         this.load.image('ground', 'assets/sets/tiles/5.png');
         this.load.atlas('explosion', 'assets/particles/explosion.png', 'assets/particles/explosion.json');
+
+        this.load.image('beast_punch', 'assets/characters/beast/beast_punch.png')
+       
     }
 
     onPadConnected(pad) {

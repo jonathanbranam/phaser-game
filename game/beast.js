@@ -7,8 +7,18 @@ class Beast extends Player {
             primaryDamage: 28,
             primaryDistance: 24,
             primaryLength: 24,
-            primarySpeed: 10,
+            primarySpeed: 4,
+            primaryTexture: 'beast_punch',
         }
         super(scene, x, y, 'ship', config);
     }
+
+    configureBullet(bullet, key) {
+        super.configureBullet(bullet, key);
+
+        if (key === 'beast_punch') {
+            //bullet.body.setSize(24, 24);
+        }
+    }
+
 }
