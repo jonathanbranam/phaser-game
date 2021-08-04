@@ -231,8 +231,6 @@ class Player extends Phaser.Physics.Arcade.Sprite {
         for (const key of configKeys) {
             this.setData(key, config[key]);
         }
-
-        this.setData('maxHealth', config.maxHealth);
     }
 
     setGamepad(pad) {
@@ -348,6 +346,8 @@ class Player extends Phaser.Physics.Arcade.Sprite {
             //console.log(this.pad.leftStick, a*Phaser.Math.RAD_TO_DEG);
             this.rotation = a;
             this.showTargetDisplay = true;
+        } else {
+            this.showTargetDisplay = false;
         }
         const speedMult = this.curSpeed() * SPEED_SCALE;
         this.setVelocity(this.pad.leftStick.x*speedMult, this.pad.leftStick.y*speedMult);
@@ -401,6 +401,7 @@ class Player extends Phaser.Physics.Arcade.Sprite {
         const primaryLength = this.getData('primaryLength');
 
         this.targetDisplay.fillStyle(0xFFFFFF, 0.2);
+        // TODO: make with a data property
         const width = 50;
         this.targetDisplay.fillRect(-width/2, fireOffset + primaryLength/2,
             width, primaryDistance + primaryLength + fireOffset);
