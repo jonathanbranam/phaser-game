@@ -1,6 +1,6 @@
 
 const CONFIG_SCALE = {
-    speed: 3/4,
+    speed: 2.5/4,
 }
 
 const PLAYER_CONFIG_DEFAULTS = {
@@ -16,11 +16,9 @@ const PLAYER_CONFIG_DEFAULTS = {
     // damage per bullet
     primaryDamage: 20,
     // speed of primary ranged attack
-    primarySpeed: 10,
+    primarySpeed: 15,
     primaryDistance: 200,
     primaryLength: 22,
-
-    weaponFireOffset: 0,
 
     abilityMaxCharge: 100,
     abilityChargeRate: 20,
@@ -136,12 +134,10 @@ class Player extends Phaser.Physics.Arcade.Sprite {
     shootBullet(key, x, y, vel_x, vel_y, damage, distance, bulletLength) {
         const bullet = this.bulletGroups[key].get(x, y, key)
         if (bullet) {
+
             bullet.type = 'bullet';
 
-            // TODO: Offset the weapon more for larger bullets
-            const weaponFireOffset = this.getData('weaponFireOffset') +
-                bulletLength;
-            const facing = new Vector2(weaponFireOffset, 0);
+            const facing = new Vector2(bulletLength, 0);
             Phaser.Math.Rotate(facing, this.rotation);
             x += facing.x;
             y += facing.y;
@@ -361,15 +357,14 @@ class Player extends Phaser.Physics.Arcade.Sprite {
         this.targetDisplay.y = this.y;
         this.targetDisplay.rotation = this.rotation - Math.PI/2;
 
-        const fireOffset = this.getData('weaponFireOffset');
         const primaryDistance = this.getData('primaryDistance');
         const primaryLength = this.getData('primaryLength');
 
         this.targetDisplay.fillStyle(0xFFFFFF, 0.2);
         // TODO: make with a data property
         const width = 50;
-        this.targetDisplay.fillRect(-width/2, fireOffset + primaryLength/2,
-            width, primaryDistance + primaryLength + fireOffset);
+        this.targetDisplay.fillRect(-width/2, primaryLength/2,
+            width, primaryDistance + primaryLength);
     }
 
     updateUlt(delta) {
