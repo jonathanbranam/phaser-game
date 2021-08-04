@@ -42,7 +42,7 @@ function ignoreFromOtherCameras(includeCameras, allCameras, objects) {
     }
 }
 
-class TopdownTest2 extends Phaser.Scene {
+class WorldScene extends Phaser.Scene {
 
     constructor() {
         super({ key: 'topdown', active: true });
@@ -77,8 +77,8 @@ class TopdownTest2 extends Phaser.Scene {
         }
     }
 
-    createPlayer(index, x, y, config) {
-        const player = new Player(this, x, y, 'ship', config)
+    createPlayer(playerClass, index, x, y) {
+        const player = new playerClass(this, x, y)
         player.name = "player-" + index;
         this.add.existing(player);
         this.physics.add.existing(player);
@@ -164,19 +164,7 @@ class TopdownTest2 extends Phaser.Scene {
         this.walls = walls;
         this.borderGroup = borderGroup;
 
-        const player1Config = {
-            //speed: 4,
-            //primaryFireRate: 0.7,
-            //primaryDamage: 3,
-            //primarySpeed: 8,
-        }
-
-        const player2Config = {
-            //speed: 4,
-            //primaryDamage: 6,
-        }
-
-        this.player = this.createPlayer(0, BOUNDS_WIDTH/2, 100, player1Config);
+        this.player = this.createPlayer(Beast, 0, BOUNDS_WIDTH/2, 100);
 
         this.player.setKeys(this.input.keyboard.addKeys({
             up: Phaser.Input.Keyboard.KeyCodes.W,
@@ -186,7 +174,7 @@ class TopdownTest2 extends Phaser.Scene {
             primaryFire: Phaser.Input.Keyboard.KeyCodes.SPACE,
             abilityFire: Phaser.Input.Keyboard.KeyCodes.V
         }));
-        this.player2 = this.createPlayer(1, BOUNDS_WIDTH/2, BOUNDS_HEIGHT-100, player2Config);
+        this.player2 = this.createPlayer(Wolverine, 1, BOUNDS_WIDTH/2, BOUNDS_HEIGHT-100,);
         this.player2.setKeys(this.input.keyboard.addKeys({
             up: Phaser.Input.Keyboard.KeyCodes.UP,
             down: Phaser.Input.Keyboard.KeyCodes.DOWN,
@@ -446,7 +434,7 @@ const config = {
     input: {
         gamepad: true
     },
-    scene: [ TopdownTest2, TopdownGUI ],
+    scene: [ WorldScene, TopdownGUI ],
     physics: {
         default: 'arcade',
         arcade: {
