@@ -66,6 +66,8 @@ class WorldScene extends Phaser.Scene {
         this.load.image('ground', 'assets/sets/tiles/5.png');
         this.load.atlas('explosion', 'assets/particles/explosion.png', 'assets/particles/explosion.json');
 
+        this.load.atlas('wolverine', 'assets/characters/wolverine/wolverine.png', 'assets/characters/wolverine/wolverine.json');
+        this.load.atlas('beast', 'assets/characters/beast/beast.png', 'assets/characters/beast/beast.json');
         this.load.image('beast_punch', 'assets/characters/beast/beast_punch.png')
        
     }
@@ -441,7 +443,7 @@ const config = {
     physics: {
         default: 'arcade',
         arcade: {
-            debug: true
+            debug: false
         }
     }
 };
