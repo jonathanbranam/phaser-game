@@ -56,7 +56,7 @@ class WorldScene extends Phaser.Scene {
         //this.load.atlas('assets', 'assets/games/breakout/breakout.png', 'assets/games/breakout/breakout.json');
         this.load.bitmapFont('atari', 'assets/fonts/bitmap/atari-smooth.png', 'assets/fonts/bitmap/atari-smooth.xml');
         this.load.atlas('platformer', 'assets/sets/platformer.png', 'assets/sets/platformer.json');
-        this.load.atlas('desert', 'phaser-assets/backgrounds/desert-1.png', 'phaser-assets/backgrounds/desert-1.json');
+        this.load.atlas('desert', 'assets/backgrounds/desert-1.png', 'assets/backgrounds/desert-1.json');
         this.load.text('desert-1', 'maps/desert-1.txt');
 
         this.load.image('ship', 'assets/games/asteroids/ship.png')
