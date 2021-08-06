@@ -145,14 +145,14 @@ class Player extends Phaser.Physics.Arcade.Sprite {
         // Override in subclass
     }
     
-    shootBullet(key, x, y, vel_x, vel_y, damage, distance, bulletLength) {
+    shootBullet(key, x, y, vel_x, vel_y, rotation, damage, distance, bulletLength) {
         const bullet = this.bulletGroups[key].get(x, y, key)
         if (bullet) {
 
             bullet.type = 'bullet';
 
             const facing = new Vector2(bulletLength, 0);
-            Phaser.Math.Rotate(facing, this.aimRotation);
+            Phaser.Math.Rotate(facing, rotation);
             x += facing.x;
             y += facing.y;
 
@@ -164,7 +164,7 @@ class Player extends Phaser.Physics.Arcade.Sprite {
             bullet.body.onWorldBounds = true;
             bullet.enableBody(true, x, y, true, true);
             bullet.setVelocity(vel_x, vel_y);
-            bullet.rotation = this.aimRotation;
+            bullet.rotation = rotation;
             
             this.configureBullet(bullet, key);
 
@@ -238,10 +238,17 @@ class Player extends Phaser.Physics.Arcade.Sprite {
         if (charge >= shotAmount && this.checkActionRate(time, 'primaryFireRate')) {
             this.setData('primaryCharge', Math.max(charge-shotAmount, 0));
             const facing = new Vector2(1, 0);
-            Phaser.Math.Rotate(facing, this.aimRotation);
+            let shootRotation;
+            if (this.showTargetDisplay) {
+                shootRotation = this.aimRotation;
+            } else {
+                shootRotation = this.rotation;
+            }
+            Phaser.Math.Rotate(facing, shootRotation);
             const bulletSpeed = this.getData('primarySpeed') * SPEED_SCALE;
             this.shootBullet(this.getData('primaryTexture'), this.x, this.y,
                 facing.x*bulletSpeed, facing.y*bulletSpeed,
+                shootRotation,
                 this.getData('primaryDamage'),
                 this.getData('primaryDistance'),
                 this.getData('primaryLength'),
@@ -255,10 +262,18 @@ class Player extends Phaser.Physics.Arcade.Sprite {
         if (maxCharge - charge < 1) {
             this.setData('abilityCharge', 0);
             const facing = new Vector2(1, 0);
-            Phaser.Math.Rotate(facing, this.aimRotation);
+            let shootRotation;
+            if (this.showTargetDisplay) {
+                shootRotation = this.aimRotation;
+            } else {
+                shootRotation = this.rotation;
+            }
+            Phaser.Math.Rotate(facing, shootRotation);
+
             const bulletSpeed = this.getData('abilitySpeed') * SPEED_SCALE;
             this.shootBullet(this.getData('abilityTexture'), this.x, this.y,
                 facing.x*bulletSpeed, facing.y*bulletSpeed,
+                shootRotation,
                 this.getData('abilityDamage'),
                 this.getData('abilityDistance'),
                 this.getData('abilityLength'),
@@ -474,13 +489,12 @@ class Player extends Phaser.Physics.Arcade.Sprite {
         g.clear();
 
         const x_offset = -(width / 2);
-        g.lineStyle(1, '0x000000', 2);
+        g.lineStyle(1, '0x000000', 1);
         g.strokeRect(x_offset, y_offset, width, height);
 
-        g.fillStyle(color, 1.0);
+        g.fillStyle(color, 0.7);
         const barWidth = width * amount;
         g.fillRect(x_offset, y_offset, barWidth, height);
-        g.alpha = 0.7;
     }
 
     drawArc(g, amount, radius, thickness, x, y, color, alpha=1.0) {
