@@ -146,7 +146,7 @@ class Player extends Phaser.Physics.Arcade.Sprite {
             bullet.type = 'bullet';
 
             const facing = new Vector2(bulletLength, 0);
-            Phaser.Math.Rotate(facing, this.rotation);
+            Phaser.Math.Rotate(facing, this.aimRotation);
             x += facing.x;
             y += facing.y;
 
@@ -158,7 +158,7 @@ class Player extends Phaser.Physics.Arcade.Sprite {
             bullet.body.onWorldBounds = true;
             bullet.enableBody(true, x, y, true, true);
             bullet.setVelocity(vel_x, vel_y);
-            bullet.rotation = this.rotation;
+            bullet.rotation = this.aimRotation;
             
             this.configureBullet(bullet, key);
 
@@ -232,7 +232,7 @@ class Player extends Phaser.Physics.Arcade.Sprite {
         if (charge >= shotAmount && this.checkActionRate(time, 'primaryFireRate')) {
             this.setData('primaryCharge', Math.max(charge-shotAmount, 0));
             const facing = new Vector2(1, 0);
-            Phaser.Math.Rotate(facing, this.rotation);
+            Phaser.Math.Rotate(facing, this.aimRotation);
             const bulletSpeed = this.getData('primarySpeed') * SPEED_SCALE;
             this.shootBullet(this.getData('primaryTexture'), this.x, this.y,
                 facing.x*bulletSpeed, facing.y*bulletSpeed,
@@ -249,7 +249,7 @@ class Player extends Phaser.Physics.Arcade.Sprite {
         if (maxCharge - charge < 1) {
             this.setData('abilityCharge', 0);
             const facing = new Vector2(1, 0);
-            Phaser.Math.Rotate(facing, this.rotation);
+            Phaser.Math.Rotate(facing, this.aimRotation);
             const bulletSpeed = this.getData('abilitySpeed') * SPEED_SCALE;
             this.shootBullet(this.getData('abilityTexture'), this.x, this.y,
                 facing.x*bulletSpeed, facing.y*bulletSpeed,
@@ -262,11 +262,16 @@ class Player extends Phaser.Physics.Arcade.Sprite {
 
     setPlayerVelocity(x, y) {
         if (Math.abs(x) > 0.0 || Math.abs(y) > 0.0) {
-            if (this.anims.getCurrentKey() != this.getData('animWalk') || !this.anims.isPlaying) {
+            this.rotation = new Vector2(x, y).angle();
+                if (this.anims.getName() != this.getData('animWalk') || !this.anims.isPlaying) {
+                this.stoppingWalkAnimation = false;
                 this.play(this.getData('animWalk'));
             }
         } else {
-            this.anims.stopOnRepeat();
+            if (!this.stoppingWalkAnimation) {
+                this.stoppingWalkAnimation = true;
+                this.stopAfterDelay(200);
+            }
         }
 
         this.setVelocity(x, y);
@@ -303,7 +308,9 @@ class Player extends Phaser.Physics.Arcade.Sprite {
         }
         let facing = new Vector2(1, 0);
         Phaser.Math.Rotate(facing, this.angle*Phaser.Math.DEG_TO_RAD);
+        this.aimRotation = this.angle*Phaser.Math.DEG_TO_RAD;
         if (moving) {
+            this.rotation = facing.angle();
             this.setPlayerVelocity(facing.x * speedMult, facing.y * speedMult);
         } else {
             this.setPlayerVelocity(0, 0);
@@ -331,7 +338,7 @@ class Player extends Phaser.Physics.Arcade.Sprite {
         const STICK_MIN = 0.05;
         if (Math.abs(this.pad.rightStick.x) > STICK_MIN || Math.abs(this.pad.rightStick.y) > STICK_MIN) {
             const a = Phaser.Math.Angle.Between(0, 0, this.pad.rightStick.x, this.pad.rightStick.y);
-            this.rotation = a;
+            this.aimRotation = a;
             this.showTargetDisplay = true;
         } else {
             this.showTargetDisplay = false;
@@ -351,7 +358,7 @@ class Player extends Phaser.Physics.Arcade.Sprite {
 
         if (this.isDashing) {
             if (time < this.dashUntil) {
-                this.setVelocity(this.dashDirection.x*this.dashSpeedMult, this.dashDirection.y*this.dashSpeedMult);
+                this.setPlayerVelocity(this.dashDirection.x*this.dashSpeedMult, this.dashDirection.y*this.dashSpeedMult);
             } else {
                 this.isDashing = false;
             }
@@ -364,7 +371,7 @@ class Player extends Phaser.Physics.Arcade.Sprite {
                 this.dashUntil = time + this.getData('dashDuration');
                 this.dashDirection = new Vector2(this.pad.leftStick.x, this.pad.leftStick.y);
                 this.dashDirection.normalize();
-                this.setVelocity(this.dashDirection.x*this.dashSpeedMult, this.dashDirection.y*this.dashSpeedMult);
+                this.setPlayerVelocity(this.dashDirection.x*this.dashSpeedMult, this.dashDirection.y*this.dashSpeedMult);
             }
         }
 
@@ -383,7 +390,7 @@ class Player extends Phaser.Physics.Arcade.Sprite {
         }
         this.targetDisplay.x = this.x;
         this.targetDisplay.y = this.y;
-        this.targetDisplay.rotation = this.rotation - Math.PI/2;
+        this.targetDisplay.rotation = this.aimRotation - Math.PI/2;
 
         const primaryDistance = this.getData('primaryDistance');
         const primaryLength = this.getData('primaryLength');
@@ -515,6 +522,7 @@ class Player extends Phaser.Physics.Arcade.Sprite {
 
     die() {
         this.setData('health', 0);
+        this.stop();
         console.log(this.name + " DIED!");
         this.emit('died', this);
         this.state = 'dead';
