@@ -87,6 +87,23 @@ class Player extends Phaser.Physics.Arcade.Sprite {
             on: false,
         })
 
+        this.smokeParticles = this.scene.add.particles('explosion');
+
+        this.smokeParticles.createEmitter({
+            frame: 'white-smoke',
+            angle: {
+                min: 220, max: 290, steps: 10
+            },
+            lifespan: 2000,
+            speed: 20,
+            quantity: 4,
+            scale: {
+                start: 0.2, end: 0.5
+            },
+            on: false,
+        })
+
+
         this.coolDowns = {};
         this.bulletGroups = {};
         this.bullets = [];
@@ -102,6 +119,8 @@ class Player extends Phaser.Physics.Arcade.Sprite {
         if (this.getData('animIdle')) {
             this.play(this.getData('animIdle'));
         }
+        this.restoreTint();
+        this.lifeText.setVisible(true);
     }
 
     setGuiCamera(camera) {
@@ -478,6 +497,7 @@ class Player extends Phaser.Physics.Arcade.Sprite {
         this.bullets = this.bullets.filter(x => !deadBullets.includes(x));
 
         this.drawTargeting(delta);
+
         this.drawLifeBar();
         this.drawPrimaryBar();
         this.drawAbilityCharge();
@@ -518,7 +538,11 @@ class Player extends Phaser.Physics.Arcade.Sprite {
         const charge = this.getData('primaryCharge');
         const amount = charge / this.getData('primaryMaxCharge');
 
-        this.drawBar(this.primaryBar, amount, 50, 8, -38, 0xE9A009);
+        if (this.state == 'alive') {
+            this.drawBar(this.primaryBar, amount, 50, 8, -38, 0xE9A009);
+        } else {
+            this.primaryBar.clear();
+        }
     }
 
     drawAbilityCharge() {
@@ -530,18 +554,28 @@ class Player extends Phaser.Physics.Arcade.Sprite {
 
         const x = 35
         const y = CAMERA_HEIGHT - 55;
-        this.drawArc(this.abilityArc, amount, 15, 8, x, y, 0xFBE031);
+        if (this.state == 'alive') {
+            this.drawArc(this.abilityArc, amount, 15, 8, x, y, 0xFBE031);
+        } else {
+            this.abilityArc.clear();
+        }
     }
 
     drawLifeBar() {
         const health = this.getData('health');
         const amount = health / this.getData('maxHealth');
 
-        this.drawBar(this.lifeBar, amount, 50, 8, -50, 0x10e035);
-        this.drawBar(this.otherLifeBar, amount, 50, 8, -50, 0xD03035);
-        this.lifeText.x = this.x - 15;
-        this.lifeText.y = this.y - 55;
-        this.lifeText.text = health;
+        if (this.state == 'alive') {
+            this.drawBar(this.lifeBar, amount, 50, 8, -50, 0x10e035);
+            this.drawBar(this.otherLifeBar, amount, 50, 8, -50, 0xD03035);
+            this.lifeText.x = this.x - 15;
+            this.lifeText.y = this.y - 55;
+            this.lifeText.text = health;
+        } else {
+            this.lifeBar.clear();
+            this.otherLifeBar.clear();
+            this.lifeText.setVisible(false);
+        }
     }
 
     die() {
@@ -561,12 +595,21 @@ class Player extends Phaser.Physics.Arcade.Sprite {
             const health = this.getData('health');
             const damage = bullet.getData('damage');
             if (health - damage < 1) {
+                this.smokeParticles.emitParticleAt(this.x, this.y);
+                this.setTintFill(0x404040)
                 this.die();
             } else {
                 this.setData('health', health - damage)
+                this.setTintFill(0xf06060)
+                this.scene.time.delayedCall(150, this.restoreTint, undefined, this);
             }
             this.camera.shake(250, 0.01);
-            this.damagedParticles.emitParticleAt(this.x, this.y);
+        }
     }
+
+    restoreTint() {
+        if (this.state == 'alive') {
+            this.clearTint();
+        }
     }
 }
