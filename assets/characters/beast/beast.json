@@ -1,6 +1,6 @@
 {"frames": {
 
-"beast-walk-1":
+"idle-0000.png":
 {
 	"frame": {"x":0,"y":0,"w":32,"h":32},
 	"rotated": false,
@@ -8,9 +8,33 @@
 	"spriteSourceSize": {"x":0,"y":0,"w":32,"h":32},
 	"sourceSize": {"w":32,"h":32}
 },
-"beast-walk-2":
+"idle-0001.png":
 {
 	"frame": {"x":32,"y":0,"w":32,"h":32},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":32,"h":32},
+	"sourceSize": {"w":32,"h":32}
+},
+"idle-0002.png":
+{
+	"frame": {"x":64,"y":0,"w":32,"h":32},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":32,"h":32},
+	"sourceSize": {"w":32,"h":32}
+},
+"walk-0000.png":
+{
+	"frame": {"x":96,"y":0,"w":32,"h":32},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":32,"h":32},
+	"sourceSize": {"w":32,"h":32}
+},
+"walk-0001.png":
+{
+	"frame": {"x":128,"y":0,"w":32,"h":32},
 	"rotated": false,
 	"trimmed": false,
 	"spriteSourceSize": {"x":0,"y":0,"w":32,"h":32},
@@ -21,8 +45,8 @@
 	"version": "1.0",
 	"image": "beast.png",
 	"format": "RGBA8888",
-	"size": {"w":64,"h":32},
+	"size": {"w":160,"h":32},
 	"scale": "1",
-	"smartupdate": "$TexturePacker:SmartUpdate:8ebba40e79991a5a91d7d4467474a53b:48e7f5d094cf42e321245ddde1b35a41:ce1b13365698ff1c2cc73ef4e98f3a25$"
+	"smartupdate": "$TexturePacker:SmartUpdate:7c049b77c97c603582201bb148970f14:178450afbc0639455af2b6f304f8cead:ce1b13365698ff1c2cc73ef4e98f3a25$"
 }
 }

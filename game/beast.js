@@ -10,7 +10,8 @@ class Beast extends Player {
             primarySpeed: 4,
             primaryTexture: 'beast_punch',
 
-            animWalk: 'beast-walk'
+            animWalk: 'walk',
+            animIdle: 'idle',
         }
         super(scene, x, y, 'beast', config);
     }
@@ -18,8 +19,14 @@ class Beast extends Player {
     setupPlayer() {
         super.setupPlayer();
         this.anims.create({
-            key: 'beast-walk',
-            frames: this.scene.anims.generateFrameNames('beast', { prefix: 'beast-walk-', start: 1, end: 2 }),
+            key: 'walk',
+            frames: this.scene.anims.generateFrameNames('beast', { prefix: 'walk-', suffix: '.png', start: 0, end: 1, zeroPad: 4}),
+            frameRate: 4,
+            repeat: -1,
+        });
+        this.anims.create({
+            key: 'idle',
+            frames: this.scene.anims.generateFrameNames('beast', { prefix: 'idle-', suffix: '.png', start: 0, end: 2, zeroPad: 4}),
             frameRate: 4,
             repeat: -1,
         });
