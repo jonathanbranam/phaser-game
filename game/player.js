@@ -19,6 +19,7 @@ const PLAYER_CONFIG_DEFAULTS = {
     primarySpeed: 15,
     primaryDistance: 200,
     primaryLength: 22,
+    primaryWidth: 20,
     primaryTexture: 'bullet',
 
     abilityMaxCharge: 100,
@@ -405,8 +406,7 @@ class Player extends Phaser.Physics.Arcade.Sprite {
         const primaryLength = this.getData('primaryLength');
 
         this.targetDisplay.fillStyle(0xFFFFFF, 0.2);
-        // TODO: make with a data property
-        const width = 50;
+        const width = this.getData('primaryWidth');
         this.targetDisplay.fillRect(-width/2, primaryLength/2,
             width, primaryDistance + primaryLength);
     }
@@ -480,6 +480,7 @@ class Player extends Phaser.Physics.Arcade.Sprite {
         g.fillStyle(color, 1.0);
         const barWidth = width * amount;
         g.fillRect(x_offset, y_offset, barWidth, height);
+        g.alpha = 0.7;
     }
 
     drawArc(g, amount, radius, thickness, x, y, color, alpha=1.0) {

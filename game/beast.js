@@ -6,6 +6,7 @@ class Beast extends Player {
 
             primaryDamage: 28,
             primaryDistance: 24,
+            primaryWidth: 24,
             primaryLength: 24,
             primarySpeed: 4,
             primaryTexture: 'beast_punch',
