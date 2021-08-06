@@ -39,6 +39,8 @@ const PLAYER_CONFIG_DEFAULTS = {
     dashDuration: 80,
     // speed of dash
     dashSpeed: 20,
+
+    animWalk: null
 }
 
 const SPEED_SCALE = 50;
@@ -124,7 +126,6 @@ class Player extends Phaser.Physics.Arcade.Sprite {
     }
 
     setupBulletGroup(key) {
-        console.log(`setupBulletGroup(${key})`);
         const bulletGroup = this.scene.physics.add.group({
             maxSize: 100,
             collideWorldBounds: true,
@@ -259,6 +260,18 @@ class Player extends Phaser.Physics.Arcade.Sprite {
         }
     }
 
+    setPlayerVelocity(x, y) {
+        if (Math.abs(x) > 0.0 || Math.abs(y) > 0.0) {
+            if (this.anims.getCurrentKey() != this.getData('animWalk') || !this.anims.isPlaying) {
+                this.play(this.getData('animWalk'));
+            }
+        } else {
+            this.anims.stopOnRepeat();
+        }
+
+        this.setVelocity(x, y);
+    }
+
     handleKeys(time, delta) {
         //const SPEED = KEYBOARD_SPEED_SCALE;
         const speedMult = this.curSpeed() * KEYBOARD_SPEED_SCALE;
@@ -291,9 +304,9 @@ class Player extends Phaser.Physics.Arcade.Sprite {
         let facing = new Vector2(1, 0);
         Phaser.Math.Rotate(facing, this.angle*Phaser.Math.DEG_TO_RAD);
         if (moving) {
-            this.setVelocity(facing.x * speedMult, facing.y * speedMult);
+            this.setPlayerVelocity(facing.x * speedMult, facing.y * speedMult);
         } else {
-            this.setVelocity(0, 0);
+            this.setPlayerVelocity(0, 0);
         }
 
         if (this.keys.primaryFire.isDown) {
@@ -306,7 +319,7 @@ class Player extends Phaser.Physics.Arcade.Sprite {
 
         if (this.isDashing) {
             if (time < this.dashUntil) {
-                this.setVelocity(this.dashDirection.x*this.dashSpeedMult, this.dashDirection.y*this.dashSpeedMult);
+                this.setPlayerVelocity(this.dashDirection.x*this.dashSpeedMult, this.dashDirection.y*this.dashSpeedMult);
             } else {
                 this.isDashing = false;
             }
@@ -318,14 +331,15 @@ class Player extends Phaser.Physics.Arcade.Sprite {
         const STICK_MIN = 0.05;
         if (Math.abs(this.pad.rightStick.x) > STICK_MIN || Math.abs(this.pad.rightStick.y) > STICK_MIN) {
             const a = Phaser.Math.Angle.Between(0, 0, this.pad.rightStick.x, this.pad.rightStick.y);
-            //console.log(this.pad.leftStick, a*Phaser.Math.RAD_TO_DEG);
             this.rotation = a;
             this.showTargetDisplay = true;
         } else {
             this.showTargetDisplay = false;
         }
         const speedMult = this.curSpeed() * SPEED_SCALE;
-        this.setVelocity(this.pad.leftStick.x*speedMult, this.pad.leftStick.y*speedMult);
+        const xVelocity = this.pad.leftStick.x*speedMult;
+        const yVelocity = this.pad.leftStick.y*speedMult;
+        this.setPlayerVelocity(xVelocity, yVelocity);
 
         if (this.pad.R2 > 0) {
             this.shootPrimary(time, delta);
@@ -403,6 +417,7 @@ class Player extends Phaser.Physics.Arcade.Sprite {
     }
 
     preUpdate(time, delta) {
+        super.preUpdate(time, delta);
         if (this.state != 'dead') {
             this.updateCharge(delta);
 

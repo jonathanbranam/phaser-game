@@ -9,22 +9,20 @@ class Beast extends Player {
             primaryLength: 24,
             primarySpeed: 4,
             primaryTexture: 'beast_punch',
+
+            animWalk: 'beast-walk'
         }
         super(scene, x, y, 'beast', config);
     }
 
     setupPlayer() {
         super.setupPlayer();
-        //const anim = new AnimationState(this);
-        console.log(this.scene.anims.generateFrameNames('beast', { prefix: 'beast_walk_', start: 1, end: 2 }))
         this.scene.anims.create({
-            key: 'beast_walk',
-            //frames: ['beast-walk-1', 'beast-walk-2'],
-            frames: this.scene.anims.generateFrameNames('beast', { prefix: 'beast_walk_', start: 1, end: 2 }),
-            frameRate: 8,
+            key: 'beast-walk',
+            frames: this.scene.anims.generateFrameNames('beast', { prefix: 'beast-walk-', start: 1, end: 2 }),
+            frameRate: 4,
             repeat: -1,
         });
-        this.play('beast_walk');
     }
 
     configureBullet(bullet, key) {

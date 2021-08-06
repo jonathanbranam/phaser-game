@@ -190,11 +190,8 @@ class WorldScene extends Phaser.Scene {
         }));
         this.players = [this.player, this.player2];
         for (let player of this.players) {
-            //const player = this.players[i];
-            // player.on('shoot', this.onShoot, this);
             player.setupPlayer();
             player.spawn();
-            //player.on('died', this.onDied, this);
         }
 
         // Setup cameras
