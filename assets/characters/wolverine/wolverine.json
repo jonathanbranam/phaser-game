@@ -1,6 +1,6 @@
 {"frames": {
 
-"no-claws-walk-1":
+"claws-walk-0000":
 {
 	"frame": {"x":0,"y":0,"w":32,"h":32},
 	"rotated": false,
@@ -8,7 +8,7 @@
 	"spriteSourceSize": {"x":0,"y":0,"w":32,"h":32},
 	"sourceSize": {"w":32,"h":32}
 },
-"no-claws-walk-2":
+"claws-walk-0001":
 {
 	"frame": {"x":32,"y":0,"w":32,"h":32},
 	"rotated": false,
@@ -16,7 +16,7 @@
 	"spriteSourceSize": {"x":0,"y":0,"w":32,"h":32},
 	"sourceSize": {"w":32,"h":32}
 },
-"claws-walk-1":
+"idle-0000":
 {
 	"frame": {"x":64,"y":0,"w":32,"h":32},
 	"rotated": false,
@@ -24,9 +24,33 @@
 	"spriteSourceSize": {"x":0,"y":0,"w":32,"h":32},
 	"sourceSize": {"w":32,"h":32}
 },
-"claws-walk-2":
+"idle-0001":
 {
 	"frame": {"x":96,"y":0,"w":32,"h":32},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":32,"h":32},
+	"sourceSize": {"w":32,"h":32}
+},
+"idle-0002":
+{
+	"frame": {"x":128,"y":0,"w":32,"h":32},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":32,"h":32},
+	"sourceSize": {"w":32,"h":32}
+},
+"no-claws-walk-0000":
+{
+	"frame": {"x":160,"y":0,"w":32,"h":32},
+	"rotated": false,
+	"trimmed": false,
+	"spriteSourceSize": {"x":0,"y":0,"w":32,"h":32},
+	"sourceSize": {"w":32,"h":32}
+},
+"no-claws-walk-0001":
+{
+	"frame": {"x":192,"y":0,"w":32,"h":32},
 	"rotated": false,
 	"trimmed": false,
 	"spriteSourceSize": {"x":0,"y":0,"w":32,"h":32},
@@ -35,10 +59,10 @@
 "meta": {
 	"app": "https://www.codeandweb.com/texturepacker",
 	"version": "1.0",
-	"image": "wolverine.png",
+	"image": "wolverin.png",
 	"format": "RGBA8888",
-	"size": {"w":128,"h":32},
+	"size": {"w":224,"h":32},
 	"scale": "1",
-	"smartupdate": "$TexturePacker:SmartUpdate:55ddfc0cd88c0c5fa90d49e861d7bd3d:11bd7dd400940fc5a0d847502eedfed7:ac14fa449f80f43e978f1e68601766bf$"
+	"smartupdate": "$TexturePacker:SmartUpdate:f1954475932f11bdb00409a774306f2c:22c91ce63838ce30c28f9825e0022e4a:fd31070ef4b599919ecf6bcf6ccf64df$"
 }
 }

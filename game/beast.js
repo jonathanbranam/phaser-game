@@ -17,7 +17,7 @@ class Beast extends Player {
 
     setupPlayer() {
         super.setupPlayer();
-        this.scene.anims.create({
+        this.anims.create({
             key: 'beast-walk',
             frames: this.scene.anims.generateFrameNames('beast', { prefix: 'beast-walk-', start: 1, end: 2 }),
             frameRate: 4,

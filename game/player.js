@@ -40,7 +40,8 @@ const PLAYER_CONFIG_DEFAULTS = {
     // speed of dash
     dashSpeed: 20,
 
-    animWalk: null
+    animWalk: null,
+    animIdle: null,
 }
 
 const SPEED_SCALE = 50;
@@ -96,6 +97,10 @@ class Player extends Phaser.Physics.Arcade.Sprite {
         this.setData('primaryCharge', this.getData('primaryMaxCharge'));
         this.setData('abilityCharge', 0);
         this.setData('ultCharge', 0);
+        this.stop();
+        if (this.getData('animIdle')) {
+            this.play(this.getData('animIdle'));
+        }
     }
 
     setGuiCamera(camera) {
@@ -265,12 +270,16 @@ class Player extends Phaser.Physics.Arcade.Sprite {
             this.rotation = new Vector2(x, y).angle();
                 if (this.anims.getName() != this.getData('animWalk') || !this.anims.isPlaying) {
                 this.stoppingWalkAnimation = false;
+                this.chain();
                 this.play(this.getData('animWalk'));
             }
         } else {
             if (!this.stoppingWalkAnimation) {
                 this.stoppingWalkAnimation = true;
                 this.stopAfterDelay(200);
+                if (this.getData('animIdle')) {
+                    this.chain(this.getData('animIdle'));
+                }
             }
         }
 
