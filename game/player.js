@@ -564,9 +564,9 @@ class Player extends Phaser.Physics.Arcade.Sprite {
                 this.die();
             } else {
                 this.setData('health', health - damage)
-                this.camera.shake(250, 0.01);
-                this.damagedParticles.emitParticleAt(this.x, this.y);
             }
-        }
+            this.camera.shake(250, 0.01);
+            this.damagedParticles.emitParticleAt(this.x, this.y);
+    }
     }
 }
