@@ -324,7 +324,6 @@ class WorldScene extends Phaser.Scene {
     }
 
     restart() {
-        console.log('RESTART');
         for (let player of this.players) {
             player.spawn();
         }
@@ -438,9 +437,15 @@ const config = {
     },
     scene: [ WorldScene, TopdownGUI ],
     physics: {
-        default: 'arcade',
-        arcade: {
-            debug: false
+        matter: {
+            enableSleeping: true,
+            gravity: {
+                y: 0
+            },
+            debug: {
+                showBody: true,
+                showStaticBody: true
+            }
         }
     }
 };
