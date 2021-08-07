@@ -3,8 +3,6 @@ const Vector2 = Phaser.Math.Vector2;
 const TILE_SIZE = 32;
 const SCREEN_WIDTH = 800;
 const SCREEN_HEIGHT = 400;
-//const BOUNDS_WIDTH = 1000;
-//const BOUNDS_HEIGHT = 1200;
 const BOUNDS_WIDTH = 32 * 32;
 const BOUNDS_HEIGHT = 32 * 32;
 const SCREEN_SPLIT = 'vertical';
@@ -83,20 +81,17 @@ class WorldScene extends Phaser.Scene {
     }
 
     createPlayer(playerClass, index, x, y) {
-        const player = new playerClass(this, x, y)
+        const player = new playerClass(this.matter.world, x, y)
         player.name = "player-" + index;
         this.add.existing(player);
-        this.physics.add.existing(player);
-        player.setCollideWorldBounds(true);
+        //this.physics.add.existing(player);
+        //player.setCollideWorldBounds(true);
 
         return player;
     }
 
     create() {
-        this.physics.world.setBounds(0, 0, BOUNDS_WIDTH, BOUNDS_HEIGHT);
-
-        //  Enable world bounds
-        this.physics.world.setBoundsCollision(true);
+        this.matter.world.setBounds(0, 0, BOUNDS_WIDTH, BOUNDS_HEIGHT);
 
         // Create scene
         //this.add.tileSprite(0, 0, BOUNDS_WIDTH, BOUNDS_HEIGHT, 'platformer', '5').setOrigin(0);
@@ -133,8 +128,6 @@ class WorldScene extends Phaser.Scene {
 
         // Setup rocks
 
-        const walls = this.physics.add.staticGroup();
-
         if (false) {
             // random walls
             for (let i = 0; i < 15; i++) {
@@ -151,7 +144,8 @@ class WorldScene extends Phaser.Scene {
                 console.log(row);
                 for (let x = 0; x < row.length; x++) {
                     if (row[x] === 'X') {
-                        walls.add(this.add.tileSprite((x+1)*32, (y+1)*32, 32, 32, 'desert', 'wall-unconnected').setOrigin(0));
+                        this.add.tileSprite((x+1)*32, (y+1)*32, 32, 32, 'desert', 'wall-unconnected').setOrigin(0);
+                        this.matter.add.rectangle((x+1)*32+16, (y+1)*32+16, 32, 32, { isStatic: true });
                     }
                 }
             }
@@ -159,15 +153,15 @@ class WorldScene extends Phaser.Scene {
 
 
         // Create World Border
-        const borderGroup = this.physics.add.staticGroup();
         const BORDER_SIZE = 32;
-        borderGroup.add(this.add.rectangle(0, 0, BOUNDS_WIDTH, BORDER_SIZE, 0x202020).setOrigin(0))
-        borderGroup.add(this.add.rectangle(0, BOUNDS_HEIGHT-BORDER_SIZE, BOUNDS_WIDTH, BORDER_SIZE, 0x202020).setOrigin(0))
-        borderGroup.add(this.add.rectangle(0, 0, BORDER_SIZE, BOUNDS_HEIGHT, 0x202020).setOrigin(0))
-        borderGroup.add(this.add.rectangle(BOUNDS_WIDTH-BORDER_SIZE, 0, BORDER_SIZE, BOUNDS_HEIGHT, 0x202020).setOrigin(0))
-
-        this.walls = walls;
-        this.borderGroup = borderGroup;
+        this.add.rectangle(0, 0, BOUNDS_WIDTH, BORDER_SIZE, 0x202020).setOrigin(0);
+        this.matter.add.rectangle(BOUNDS_WIDTH/2, BORDER_SIZE/2, BOUNDS_WIDTH, BORDER_SIZE, { isStatic: true });
+        this.add.rectangle(0, BOUNDS_HEIGHT-BORDER_SIZE, BOUNDS_WIDTH, BORDER_SIZE, 0x202020).setOrigin(0);
+        this.matter.add.rectangle(BOUNDS_WIDTH/2, BOUNDS_HEIGHT-BORDER_SIZE/2, BOUNDS_WIDTH, BORDER_SIZE, { isStatic: true });
+        this.add.rectangle(0, 0, BORDER_SIZE, BOUNDS_HEIGHT, 0x202020).setOrigin(0);
+        this.matter.add.rectangle(BOUNDS_WIDTH-BORDER_SIZE/2, BOUNDS_HEIGHT/2, BORDER_SIZE, BOUNDS_HEIGHT, { isStatic: true });
+        this.add.rectangle(BOUNDS_WIDTH-BORDER_SIZE, 0, BORDER_SIZE, BOUNDS_HEIGHT, 0x202020).setOrigin(0);
+        this.matter.add.rectangle(BORDER_SIZE/2, BOUNDS_HEIGHT/2, BORDER_SIZE, BOUNDS_HEIGHT, { isStatic: true });
 
         this.player = this.createPlayer(Beast, 0, BOUNDS_WIDTH/2, 100);
 
@@ -222,32 +216,16 @@ class WorldScene extends Phaser.Scene {
 
         gameCameras = [this.cameras.main, this.camera2];
 
-        //this.player = new Player(this, 400, 300, 'ship')
-        //this.add.existing(this.player);
-        //this.physics.add.existing(this.player);
-
         const pads = this.input.gamepad.gamepads;
         console.log("Found " + pads.length + " game pads");
 
 
-        this.physics.add.collider(this.players, walls, this.playerHitWall, null, this);
-        this.physics.add.collider(this.players, borderGroup, this.playerHitWall, null, this);
+        //this.physics.add.collider(this.players, walls, this.playerHitWall, null, this);
+        //this.physics.add.collider(this.players, borderGroup, this.playerHitWall, null, this);
 
-        this.physics.add.collider(this.players, this.players, this.playerHitPlayer, null, this);
+        //this.physics.add.collider(this.players, this.players, this.playerHitPlayer, null, this);
 
-        this.physics.world.on('worldbounds', this.onWorldBounds, this);
-
-        /*
-        this.bullets = this.physics.add.group({
-            maxSize: 100,
-            collideWorldBounds: true,
-        });
-
-        this.physics.add.collider(this.bullets, walls, this.bulletHitWall, null, this);
-        this.physics.add.collider(this.bullets, borderGroup, this.bulletHitWall, null, this);
-
-        this.physics.add.overlap(this.bullets, this.players, this.bulletHitPlayer, null, this);
-        */
+        //this.physics.world.on('worldbounds', this.onWorldBounds, this);
 
     }
 
@@ -296,19 +274,6 @@ class WorldScene extends Phaser.Scene {
     }
 
 
-    /*
-    onShoot(player, x, y, dir_x, dir_y, damage) {
-        //console.log("SHOOT", x, y, dir_x, dir_y);
-        let bullet = this.bullets.get(x, y, 'bullet')
-        if (bullet) {
-            bullet.setData('shotBy', player.name);
-            bullet.setData('damage', damage);
-            bullet.body.onWorldBounds = true;
-            bullet.enableBody(true, x, y, true, true);
-            bullet.setVelocity(dir_x, dir_y);
-        }
-    }
-    */
 
     onWorldBounds(body) {
         const gameObject = body.gameObject;
@@ -402,7 +367,6 @@ class TopdownGUI extends Phaser.Scene {
 
         let camera1 = null;
         let camera2 = null;
-        //camera1 = this.cameras.add(0, 0, CAMERA_WIDTH, CAMERA_HEIGHT);
         camera1 = this.cameras.main;
         camera2 = this.cameras.add(0, 0, CAMERA_WIDTH, CAMERA_HEIGHT);
         if (SCREEN_SPLIT === 'vertical') {
@@ -412,7 +376,6 @@ class TopdownGUI extends Phaser.Scene {
             camera1.setViewport(0, 0, CAMERA_WIDTH, CAMERA_HEIGHT)
             camera2.setViewport(0, CAMERA_HEIGHT, CAMERA_WIDTH, CAMERA_HEIGHT)
         }
-        //guiCameras = [camera1, camera2, this.cameras.main];
         guiCameras = [camera1, camera2];
     }
 
@@ -423,28 +386,27 @@ class TopdownGUI extends Phaser.Scene {
 
 const config = {
     type: Phaser.AUTO,
-    //width: 800,
-    //height: 600,
+    pixelArt: false,
     scale: {
         parent: 'body',
         mode: Phaser.Scale.FIT,
         width: SCREEN_WIDTH,
         height: SCREEN_HEIGHT
-        //autoRound: true,
     },
     input: {
         gamepad: true
     },
     scene: [ WorldScene, TopdownGUI ],
     physics: {
+        default: 'matter',
         matter: {
-            enableSleeping: true,
+            //enableSleeping: true,
             gravity: {
                 y: 0
             },
             debug: {
-                showBody: true,
-                showStaticBody: true
+                showBody: false,
+                showStaticBody: false
             }
         }
     }

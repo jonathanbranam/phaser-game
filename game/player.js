@@ -1,6 +1,6 @@
 
 const CONFIG_SCALE = {
-    speed: 2.5/4,
+    speed: 2/4,
 }
 
 const PLAYER_CONFIG_DEFAULTS = {
@@ -45,11 +45,11 @@ const PLAYER_CONFIG_DEFAULTS = {
     animIdle: null,
 }
 
-const SPEED_SCALE = 50;
-const KEYBOARD_SPEED_SCALE = 50;
-const DASH_SPEED_SCALE = 50;
+const SPEED_SCALE = 1;
+const KEYBOARD_SPEED_SCALE = 1;
+const DASH_SPEED_SCALE = 1;
 
-class Player extends Phaser.Physics.Arcade.Sprite {
+class Player extends Phaser.Physics.Matter.Sprite {
 
     constructor(scene, x, y, texture, config) {
         super(scene, x, y, texture);
@@ -151,6 +151,7 @@ class Player extends Phaser.Physics.Arcade.Sprite {
     }
 
     setupBulletGroup(key) {
+        /*
         const bulletGroup = this.scene.physics.add.group({
             maxSize: 100,
             collideWorldBounds: true,
@@ -158,6 +159,7 @@ class Player extends Phaser.Physics.Arcade.Sprite {
         this.scene.addBulletGroup(bulletGroup);
 
         this.bulletGroups[key] = bulletGroup;
+        */
     }
 
     configureBullet(bullet, key) {
