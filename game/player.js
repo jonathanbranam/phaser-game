@@ -505,6 +505,8 @@ class Player extends Phaser.Physics.Matter.Sprite {
         this.drawLifeBar();
         this.drawPrimaryBar();
         this.drawAbilityCharge();
+
+        this.setAngularVelocity(0);
     }
 
     drawBar(g, amount, width, height, y_offset, color) {
