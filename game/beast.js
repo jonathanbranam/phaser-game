@@ -3,6 +3,7 @@ class Beast extends Player {
         let config = {
             maxHealth: 300,
             speed: 4.5,
+            mass: 50,
 
             primaryDamage: 28,
             primaryDistance: 24,

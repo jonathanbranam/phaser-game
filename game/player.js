@@ -6,6 +6,7 @@ const CONFIG_SCALE = {
 const PLAYER_CONFIG_DEFAULTS = {
     maxHealth: 200,
     speed: 4,
+    mass: 10,
 
     primaryMaxCharge: 60,
     primaryShotAmount: 20,
@@ -111,6 +112,7 @@ class Player extends Phaser.Physics.Matter.Sprite {
 
     spawn() {
         this.state = 'alive';
+        this.setMass(this.getData('mass'));
         this.setData('health', this.getData('maxHealth'));
         this.setData('primaryCharge', this.getData('primaryMaxCharge'));
         this.setData('abilityCharge', 0);
