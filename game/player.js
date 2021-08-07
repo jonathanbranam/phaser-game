@@ -52,7 +52,7 @@ const DASH_SPEED_SCALE = 1;
 class Player extends Phaser.Physics.Matter.Sprite {
 
     constructor(scene, x, y, texture, config) {
-        super(scene, x, y, texture);
+        super(scene, x, y, texture, undefined, { shape: 'circle'});
 
         this.pad = null;
 
