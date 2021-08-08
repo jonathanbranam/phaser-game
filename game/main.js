@@ -47,7 +47,6 @@ class WorldScene extends Phaser.Scene {
     constructor() {
         super({ key: 'topdown', active: true });
         this.gamepadsConnected = {};
-        this.gamepadsAssigned = {};
         this.nextCheckGamepadsTime = 1000;
         this.handledGuiCameras = false;
     }
