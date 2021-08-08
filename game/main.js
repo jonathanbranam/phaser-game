@@ -47,6 +47,7 @@ class WorldScene extends Phaser.Scene {
     constructor() {
         super({ key: 'topdown', active: true });
         this.gamepadsConnected = {};
+        this.gamepadsAssigned = {};
         this.nextCheckGamepadsTime = 1000;
         this.handledGuiCameras = false;
     }
@@ -69,16 +70,36 @@ class WorldScene extends Phaser.Scene {
         this.load.atlas('wolverine', 'assets/characters/wolverine/wolverine.png', 'assets/characters/wolverine/wolverine.json');
         this.load.atlas('beast', 'assets/characters/beast/beast.png', 'assets/characters/beast/beast.json');
         this.load.image('beast_punch', 'assets/characters/beast/beast_punch.png')
-       
     }
 
     onPadConnected(pad) {
-        console.log("Gamepad connected: " + pad.index);
-        this.gamepadsConnected[pad.index] = true;
-        if (pad.index === 0) {
-            this.player.setGamepad(pad);
-        } else if (pad.index === 1) {
-            this.player2.setGamepad(pad);
+        console.log(`Gamepad ${pad.index} connected: ${pad.id}`);
+        if (this.gamepadsConnected[pad.index]) {
+            return;
+        }
+        this.gamepadsConnected[pad.index] = { pad };
+        let gamepadIndices = Object.keys(this.gamepadsConnected);
+        let assignedPlayer = 0;
+        for (let padIndex of gamepadIndices) {
+            let padConfig = this.gamepadsConnected[padIndex];
+            if (padConfig.pad.id.includes('coocaa')) {
+                console.log(`Skipping wireless controller.`);
+                padConfig.player = undefined;
+                continue;
+            }
+            padConfig.player = assignedPlayer;
+            console.log(`Assign player ${assignedPlayer} to pad ${padConfig.pad.index}: ${padConfig.pad.id}`);
+            switch (assignedPlayer) {
+                case 0:
+                    this.player.setGamepad(padConfig.pad);
+                    break;
+                case 1:
+                    this.player2.setGamepad(padConfig.pad);
+                    break;
+                default:
+                    break;
+            }
+            assignedPlayer += 1;
         }
     }
 
