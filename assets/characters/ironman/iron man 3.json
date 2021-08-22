@@ -1,0 +1,175 @@
+{ "frames": {
+   "idle_front": {
+    "frame": { "x": 0, "y": 0, "w": 32, "h": 32 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 32, "h": 32 },
+    "sourceSize": { "w": 32, "h": 32 },
+    "duration": 100
+   },
+   "idle_back": {
+    "frame": { "x": 32, "y": 0, "w": 32, "h": 32 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 32, "h": 32 },
+    "sourceSize": { "w": 32, "h": 32 },
+    "duration": 100
+   },
+   "idle_right": {
+    "frame": { "x": 64, "y": 0, "w": 32, "h": 32 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 32, "h": 32 },
+    "sourceSize": { "w": 32, "h": 32 },
+    "duration": 100
+   },
+   "idle_left": {
+    "frame": { "x": 96, "y": 0, "w": 32, "h": 32 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 32, "h": 32 },
+    "sourceSize": { "w": 32, "h": 32 },
+    "duration": 100
+   },
+   "walk_front": {
+    "frame": { "x": 128, "y": 0, "w": 32, "h": 32 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 32, "h": 32 },
+    "sourceSize": { "w": 32, "h": 32 },
+    "duration": 250
+   },
+   "walk_front": {
+    "frame": { "x": 0, "y": 0, "w": 32, "h": 32 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 32, "h": 32 },
+    "sourceSize": { "w": 32, "h": 32 },
+    "duration": 250
+   },
+   "walk_front": {
+    "frame": { "x": 160, "y": 0, "w": 32, "h": 32 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 32, "h": 32 },
+    "sourceSize": { "w": 32, "h": 32 },
+    "duration": 250
+   },
+   "walk_left": {
+    "frame": { "x": 192, "y": 0, "w": 32, "h": 32 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 32, "h": 32 },
+    "sourceSize": { "w": 32, "h": 32 },
+    "duration": 250
+   },
+   "walk_left": {
+    "frame": { "x": 96, "y": 0, "w": 32, "h": 32 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 32, "h": 32 },
+    "sourceSize": { "w": 32, "h": 32 },
+    "duration": 250
+   },
+   "walk_left": {
+    "frame": { "x": 224, "y": 0, "w": 32, "h": 32 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 32, "h": 32 },
+    "sourceSize": { "w": 32, "h": 32 },
+    "duration": 250
+   },
+   "walk_right": {
+    "frame": { "x": 256, "y": 0, "w": 32, "h": 32 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 32, "h": 32 },
+    "sourceSize": { "w": 32, "h": 32 },
+    "duration": 250
+   },
+   "walk_right": {
+    "frame": { "x": 288, "y": 0, "w": 32, "h": 32 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 32, "h": 32 },
+    "sourceSize": { "w": 32, "h": 32 },
+    "duration": 250
+   },
+   "walk_right": {
+    "frame": { "x": 320, "y": 0, "w": 32, "h": 32 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 32, "h": 32 },
+    "sourceSize": { "w": 32, "h": 32 },
+    "duration": 250
+   },
+   "walk_back": {
+    "frame": { "x": 352, "y": 0, "w": 32, "h": 32 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 32, "h": 32 },
+    "sourceSize": { "w": 32, "h": 32 },
+    "duration": 250
+   },
+   "walk_back": {
+    "frame": { "x": 384, "y": 0, "w": 32, "h": 32 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 32, "h": 32 },
+    "sourceSize": { "w": 32, "h": 32 },
+    "duration": 250
+   },
+   "walk_back": {
+    "frame": { "x": 416, "y": 0, "w": 32, "h": 32 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 32, "h": 32 },
+    "sourceSize": { "w": 32, "h": 32 },
+    "duration": 250
+   }
+ },
+ "meta": {
+  "app": "http://www.aseprite.org/",
+  "version": "1.2.28",
+  "image": "iron man 3.png",
+  "format": "RGBA8888",
+  "size": { "w": 448, "h": 32 },
+  "scale": "1",
+  "frameTags": [
+   { "name": "idle_front", "from": 0, "to": 0, "direction": "forward" },
+   { "name": "idle_back", "from": 1, "to": 1, "direction": "forward" },
+   { "name": "idle_right", "from": 2, "to": 2, "direction": "forward" },
+   { "name": "idle_left", "from": 3, "to": 3, "direction": "forward" },
+   { "name": "walk_front", "from": 4, "to": 6, "direction": "pingpong" },
+   { "name": "walk_left", "from": 7, "to": 9, "direction": "pingpong" },
+   { "name": "walk_right", "from": 10, "to": 12, "direction": "pingpong" },
+   { "name": "walk_back", "from": 13, "to": 15, "direction": "pingpong" }
+  ],
+  "layers": [
+   { "name": "front" },
+   { "name": "front back", "group": "front", "opacity": 255, "blendMode": "normal" },
+   { "name": "front", "group": "front", "opacity": 255, "blendMode": "normal" },
+   { "name": "front front", "group": "front", "opacity": 255, "blendMode": "normal" },
+   { "name": "front legs", "group": "front", "opacity": 255, "blendMode": "normal" },
+   { "name": "back" },
+   { "name": "back back", "group": "back", "opacity": 255, "blendMode": "normal" },
+   { "name": "back", "group": "back", "opacity": 255, "blendMode": "normal" },
+   { "name": "back front", "group": "back", "opacity": 255, "blendMode": "normal" },
+   { "name": "back legs", "group": "back", "opacity": 255, "blendMode": "normal" },
+   { "name": "right" },
+   { "name": "right left arm", "group": "right", "opacity": 255, "blendMode": "normal" },
+   { "name": "right left leg", "group": "right", "opacity": 255, "blendMode": "normal" },
+   { "name": "right body", "group": "right", "opacity": 255, "blendMode": "normal" },
+   { "name": "right right leg", "group": "right", "opacity": 255, "blendMode": "normal" },
+   { "name": "right right arm", "group": "right", "opacity": 255, "blendMode": "normal" },
+   { "name": "left" },
+   { "name": "left left arm", "group": "left", "opacity": 255, "blendMode": "normal" },
+   { "name": "left left leg", "group": "left", "opacity": 255, "blendMode": "normal" },
+   { "name": "left body", "group": "left", "opacity": 255, "blendMode": "normal" },
+   { "name": "left right leg", "group": "left", "opacity": 255, "blendMode": "normal" },
+   { "name": "left right arm", "group": "left", "opacity": 255, "blendMode": "normal" }
+  ],
+  "slices": [
+  ]
+ }
+}
